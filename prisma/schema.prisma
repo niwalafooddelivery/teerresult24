@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Set to "postgresql" with DATABASE_URL for Postgres in production
+  url      = env("DATABASE_URL")
+}
+
+model GameCategory {
+  id             String                @id @default(cuid())
+  name           String                @unique // e.g. "Shillong Teer"
+  slug           String                @unique // e.g. "shillong-teer"
+  location       String                @default("Meghalaya")
+  round1Time     String                // "03:45 PM"
+  round2Time     String                // "04:45 PM"
+  description    String?
+  order          Int                   @default(0)
+  isActive       Boolean               @default(true)
+  results        TeerResult[]
+  sourceRecords  SourceRecord[]
+  pendingReviews PendingResultReview[]
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+}
+
+model TeerResult {
+  id                String          @id @default(cuid())
+  categoryId        String
+  category          GameCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  dateStr           String          // YYYY-MM-DD in Asia/Kolkata
+  round1            String?         // Exactly 2 digits: "00" - "99" or null
+  round2            String?         // Exactly 2 digits: "00" - "99" or null
+  round1PublishedAt DateTime?
+  round2PublishedAt DateTime?
+  status            String          @default("PENDING") // PENDING, PARTIAL, COMPLETED, CANCELLED, CORRECTED
+  isVerified        Boolean         @default(false)
+  verifiedAt        DateTime?
+  verifiedBy        String?
+  sourceInfo        String?         @default("Pending Verification")
+  sourceEvidenceUrl String?
+  notes             String?
+  corrections       CorrectionLog[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([categoryId, dateStr])
+  @@index([dateStr])
+}
+
+model PendingResultReview {
+  id              String        @id @default(cuid())
+  categoryId      String
+  category        GameCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  dateStr         String        // YYYY-MM-DD in Asia/Kolkata
+  proposedRound1  String?       // "00" - "99" or null
+  proposedRound2  String?       // "00" - "99" or null
+  currentRound1   String?
+  currentRound2   String?
+  reviewType      String        // 'NEW_RESULT' | 'UPDATE' | 'CORRECTION_CANDIDATE'
+  status          String        @default("PENDING") // 'PENDING' | 'APPROVED' | 'REJECTED'
+  sourceName      String
+  sourceUrl       String
+  sourceEvidence  String?       // JSON or raw details
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, dateStr])
+}
+
+model AutomationLock {
+  key       String   @id // e.g. "SYNC_LOCK"
+  lockedBy  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model SourceRecord {
+  id          String        @id @default(cuid())
+  categoryId  String?
+  category    GameCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  sourceName  String        // e.g. "Public Ground Board", "Feed Adapter"
+  rawPayload  String?       // JSON or text snapshot
+  status      String        @default("RECEIVED") // RECEIVED, PROCESSED, FAILED
+  fetchedAt   DateTime      @default(now())
+}
+
+model ImportJob {
+  id           String    @id @default(cuid())
+  jobName      String
+  status       String    // RUNNING, SUCCESS, FAILED
+  recordsRead  Int       @default(0)
+  recordsSaved Int       @default(0)
+  errorMessage String?
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+}
+
+model CorrectionLog {
+  id          String     @id @default(cuid())
+  resultId    String
+  result      TeerResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  roundNumber Int        // 1 or 2
+  oldValue    String?
+  newValue    String
+  reason      String     // Explanation of correction
+  correctedBy String     @default("Admin")
+  createdAt   DateTime   @default(now())
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  ip        String   @unique
+  attempts  Int      @default(1)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ip, expiresAt])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  name         String   @default("Chief Editor")
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+}
