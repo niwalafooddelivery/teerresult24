@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, User, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Lock, User, ArrowRight } from 'lucide-react';
+import TeerLogo from '@/components/TeerLogo';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
@@ -40,12 +41,12 @@ export default function AdminLoginPage() {
     <div className="container" style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
       <div style={{ maxWidth: '420px', width: '100%', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '32px 28px', boxShadow: 'var(--shadow-card)' }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{ display: 'inline-flex', padding: '12px', background: '#ecfdf5', borderRadius: '50%', color: 'var(--primary-color)', marginBottom: '12px' }}>
-            <ShieldCheck size={28} />
+          <div style={{ display: 'inline-flex', marginBottom: '12px' }}>
+            <TeerLogo size={52} />
           </div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-main)' }}>Editor Portal Login</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '4px' }}>
-            Authorized editorial staff access for <strong>TeerResult2</strong>
+            Authorized editorial staff access for <strong>TeerResult</strong>
           </p>
         </div>
 

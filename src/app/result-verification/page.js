@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Result Verification Protocol - How We Validate Scores | TeerResult2',
+  title: 'Result Verification Protocol - How We Validate Scores | TeerResult',
   description:
-    'Detailed breakdown of how TeerResult2 verifies traditional archery scores from Polo Grounds Shillong, Khanapara, and Juwai before publishing.',
+    'Detailed breakdown of how TeerResult verifies traditional archery scores from Polo Grounds Shillong, Khanapara, and Juwai before publishing.',
   alternates: {
-    canonical: 'https://teerresult2.com/result-verification/',
+    canonical: 'https://teerresult24.com/result-verification/',
   },
 };
 
@@ -26,7 +26,7 @@ export default function ResultVerificationPage() {
       <article className="seo-article">
         <h2>Three-Tier Verification Standard</h2>
         <p>
-          Unlike unverified social media channels or speculative rumor boards, TeerResult2 follows a structured validation protocol prior to marking any number as verified:
+          Unlike unverified social media channels or speculative rumor boards, TeerResult follows a structured validation protocol prior to marking any number as verified:
         </p>
 
         <h3>1. Direct Ground Bulletin Corroboration</h3>

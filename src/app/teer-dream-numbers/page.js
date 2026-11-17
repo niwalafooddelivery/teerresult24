@@ -2,11 +2,11 @@ import Link from 'next/link';
 import DreamSearchGrid from '@/components/DreamSearchGrid';
 
 export const metadata = {
-  title: 'Teer Dream Numbers – Traditional Meanings & House Ending Chart | TeerResult2',
+  title: 'Teer Dream Numbers – Traditional Meanings & House Ending Chart | TeerResult',
   description:
-    'Search traditional Khasi archery dream interpretations. Find direct numbers, house, and ending digits for your dreams on TeerResult2.',
+    'Search traditional Khasi archery dream interpretations. Find direct numbers, house, and ending digits for your dreams on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/teer-dream-numbers/',
+    canonical: 'https://teerresult24.com/teer-dream-numbers/',
   },
 };
 

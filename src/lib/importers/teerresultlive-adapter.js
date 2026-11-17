@@ -49,6 +49,9 @@ export function sanitizeScoreStrict(score) {
   if (/^\d{2}$/.test(str)) {
     return str;
   }
+  if (/^\d{1}$/.test(str)) {
+    return str.padStart(2, '0');
+  }
   return null;
 }
 
@@ -221,7 +224,7 @@ export async function fetchTeerResultLiveResults(options = {}) {
 
   const response = await fetch(SOURCE_URL, {
     headers: {
-      'User-Agent': 'TeerResult2-SyncBot/1.0 (+https://teerresult2.com)',
+      'User-Agent': 'TeerResult2-SyncBot/1.0 (+https://teerresult24.com)',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.9',
       'Cache-Control': 'no-cache',

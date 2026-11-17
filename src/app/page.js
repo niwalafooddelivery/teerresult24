@@ -4,21 +4,21 @@ import LiveResults from '@/components/LiveResults';
 import PreviousResultsTable from '@/components/PreviousResultsTable';
 import Link from 'next/link';
 
-export const revalidate = 30; // Fresh ISR cache every 30 seconds
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Teer Result Today – Shillong, Khanapara & Juwai Live | TeerResult2',
+  title: 'Teer Result Today – Shillong, Khanapara & Juwai Live | TeerResult',
   description:
-    'Verified daily Teer Result updates for Shillong Teer, Khanapara Teer, Juwai Teer, and Shillong Night Teer. Fast, accurate, and transparent archery outcomes on TeerResult2.',
+    'Verified daily Teer Result updates for Shillong Teer, Khanapara Teer, Juwai Teer, and Shillong Night Teer. Fast, accurate, and transparent archery outcomes on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/',
+    canonical: 'https://teerresult24.com/',
   },
   openGraph: {
-    title: 'Teer Result Today – Shillong, Khanapara & Juwai Live | TeerResult2',
+    title: 'Teer Result Today – Shillong, Khanapara & Juwai Live | TeerResult',
     description:
-      'Fast, verified Teer Result live updates, educational history, and searchable past result archive on TeerResult2.',
-    url: 'https://teerresult2.com/',
-    siteName: 'TeerResult2',
+      'Fast, verified Teer Result live updates, educational history, and searchable past result archive on TeerResult.',
+    url: 'https://teerresult24.com/',
+    siteName: 'TeerResult',
     locale: 'en_IN',
     type: 'website',
   },
@@ -31,19 +31,66 @@ export default async function HomePage() {
   // Primary 4 categories ordered
   const primarySlugs = ['shillong-teer', 'khanapara-teer', 'juwai-teer', 'shillong-night-teer'];
 
-  const categories = await prisma.gameCategory.findMany({
-    where: { isActive: true },
-    orderBy: { order: 'asc' },
-    include: {
-      results: {
-        where: {
-          dateStr: {
-            in: [todayStr, yesterdayStr],
+  let categories = [];
+  try {
+    categories = await prisma.gameCategory.findMany({
+      where: { isActive: true },
+      orderBy: { order: 'asc' },
+      include: {
+        results: {
+          where: {
+            dateStr: {
+              in: [todayStr, yesterdayStr],
+            },
           },
         },
       },
-    },
-  });
+    });
+  } catch (dbError) {
+    console.warn('[HomePage] Database unavailable at render time, using safe category fallbacks:', dbError.message || dbError);
+    categories = [
+      {
+        id: 'shillong-teer-default',
+        name: 'Shillong Teer',
+        slug: 'shillong-teer',
+        location: 'Polo Grounds, Shillong, Meghalaya',
+        round1Time: '03:45 PM',
+        round2Time: '04:45 PM',
+        order: 1,
+        results: [],
+      },
+      {
+        id: 'khanapara-teer-default',
+        name: 'Khanapara Teer',
+        slug: 'khanapara-teer',
+        location: 'Khanapara, Guwahati, Assam',
+        round1Time: '04:10 PM',
+        round2Time: '04:45 PM',
+        order: 2,
+        results: [],
+      },
+      {
+        id: 'juwai-teer-default',
+        name: 'Juwai Teer',
+        slug: 'juwai-teer',
+        location: 'Juwai, West Jaintia Hills, Meghalaya',
+        round1Time: '02:00 PM',
+        round2Time: '02:45 PM',
+        order: 3,
+        results: [],
+      },
+      {
+        id: 'shillong-night-teer-default',
+        name: 'Shillong Night Teer',
+        slug: 'shillong-night-teer',
+        location: 'Shillong, Meghalaya',
+        round1Time: '10:30 PM',
+        round2Time: '11:30 PM',
+        order: 4,
+        results: [],
+      },
+    ];
+  }
 
   // Sort by primarySlugs
   categories.sort((a, b) => {
@@ -94,24 +141,30 @@ export default async function HomePage() {
   });
 
   // Get recent 10 results for compact historical preview
-  const recentHistory = await prisma.teerResult.findMany({
-    orderBy: [
-      { dateStr: 'desc' },
-      { category: { order: 'asc' } },
-    ],
-    take: 10,
-    include: {
-      category: {
-        select: {
-          name: true,
-          slug: true,
-          location: true,
-          round1Time: true,
-          round2Time: true,
+  let recentHistory = [];
+  try {
+    recentHistory = await prisma.teerResult.findMany({
+      orderBy: [
+        { dateStr: 'desc' },
+        { category: { order: 'asc' } },
+      ],
+      take: 10,
+      include: {
+        category: {
+          select: {
+            name: true,
+            slug: true,
+            location: true,
+            round1Time: true,
+            round2Time: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (recentErr) {
+    console.warn('[HomePage] Failed to fetch recentHistory from DB:', recentErr.message || recentErr);
+    recentHistory = [];
+  }
 
   const displayDateIST = formatISTDisplayDate(todayStr);
 
@@ -242,7 +295,7 @@ export default async function HomePage() {
       <section style={{ margin: '32px 0' }}>
         <div className="source-banner">
           <div>
-            <strong>Independent Archery Information &amp; Official Verification:</strong> All archery outcomes published on TeerResult2 are recorded from public announcements at authorized grounds under the Meghalaya Amusements and Betting Tax (Amendment) Act 1982. We do not participate in, host, or encourage wagering. Results are strictly logged in Indian Standard Time (IST / UTC+05:30). If any official revision or recount occurs, our records are audited and corrected immediately in accordance with our{' '}
+            <strong>Independent Archery Information &amp; Official Verification:</strong> All archery outcomes published on TeerResult are recorded from public announcements at authorized grounds under the Meghalaya Amusements and Betting Tax (Amendment) Act 1982. We do not participate in, host, or encourage wagering. Results are strictly logged in Indian Standard Time (IST / UTC+05:30). If any official revision or recount occurs, our records are audited and corrected immediately in accordance with our{' '}
             <Link href="/correction-policy/" style={{ color: 'var(--primary-color)', fontWeight: 600 }}>
               Correction Policy
             </Link>
@@ -284,7 +337,7 @@ export default async function HomePage() {
 
           <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-main)' }}>
-              Why does TeerResult2 show &quot;--&quot; for upcoming rounds?
+              Why does TeerResult show &quot;--&quot; for upcoming rounds?
             </h4>
             <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
               We adhere strictly to factual journalism. When a round has not yet concluded or the arrows have not been officially declared, we display &quot;--&quot; rather than fictitious predictions or unauthorized estimates.
@@ -310,12 +363,12 @@ export default async function HomePage() {
             {
               '@context': 'https://schema.org',
               '@type': 'WebSite',
-              name: 'TeerResult2',
-              url: 'https://teerresult2.com/',
+              name: 'TeerResult',
+              url: 'https://teerresult24.com/',
               description: 'Verified daily archery results for Shillong, Khanapara, Juwai, and Night Teer.',
               potentialAction: {
                 '@type': 'SearchAction',
-                target: 'https://teerresult2.com/previous-results/?date={search_term_string}',
+                target: 'https://teerresult24.com/previous-results/?date={search_term_string}',
                 'query-input': 'required name=search_term_string',
               },
             },
@@ -333,7 +386,7 @@ export default async function HomePage() {
                 },
                 {
                   '@type': 'Question',
-                  name: 'Why does TeerResult2 show "--" for upcoming rounds?',
+                  name: 'Why does TeerResult show "--" for upcoming rounds?',
                   acceptedAnswer: {
                     '@type': 'Answer',
                     text: 'We adhere strictly to factual reporting. When a round has not yet concluded or arrows have not been officially counted, we display "--" rather than fictitious predictions or unauthorized estimates.',

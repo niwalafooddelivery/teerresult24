@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import TeerLogo from '@/components/TeerLogo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -7,11 +8,16 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="container">
         <div className="footer-columns">
-          {/* Column 1 - About TeerResult2 */}
+          {/* Column 1 - About TeerResult */}
           <div className="footer-column">
-            <h3 className="footer-brand-title">TeerResult2</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <TeerLogo size={32} />
+              <h3 className="footer-brand-title" style={{ margin: 0 }}>
+                Teer<span style={{ color: '#fbbf24' }}>Result</span>
+              </h3>
+            </div>
             <p className="footer-desc">
-              TeerResult2 is an independent informational and archival website providing accurate, daily traditional archery results from authorized grounds across Meghalaya and Assam.
+              TeerResult is an independent informational and archival website providing accurate, daily traditional archery results from authorized grounds across Meghalaya and Assam.
             </p>
             <div className="footer-disclaimer-box">
               Disclaimer: Strictly for informational and educational reference. Strictly for individuals aged 18 and above. We are not affiliated with any commercial betting operations.
@@ -57,7 +63,7 @@ export default function Footer() {
 
         {/* Footer Bottom / Copyright */}
         <div className="footer-bottom-row" style={{ borderTop: '1px solid rgba(255,255,255,0.18)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)' }}>
-          <p>&copy; {currentYear} TeerResult2. All rights reserved. Fast, verified, and transparent daily archery results.</p>
+          <p>&copy; {currentYear} TeerResult. All rights reserved. Fast, verified, and transparent daily archery results.</p>
           <p>Indian Standard Time (IST / UTC+05:30)</p>
         </div>
       </div>

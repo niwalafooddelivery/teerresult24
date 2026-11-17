@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'About Us - Independent Archery Information Platform | TeerResult2',
+  title: 'About Us - Independent Archery Information Platform | TeerResult',
   description:
-    'Learn about TeerResult2, our mission to provide transparent, accurate, and prompt traditional Meghalaya archery outcome reporting and historical record keeping.',
+    'Learn about TeerResult, our mission to provide transparent, accurate, and prompt traditional Meghalaya archery outcome reporting and historical record keeping.',
   alternates: {
-    canonical: 'https://teerresult2.com/about-us/',
+    canonical: 'https://teerresult24.com/about-us/',
   },
 };
 
@@ -17,7 +17,7 @@ export default function AboutUsPage() {
       </nav>
 
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
-        <h1 className="hero-title">About TeerResult2</h1>
+        <h1 className="hero-title">About TeerResult</h1>
         <p className="hero-subtitle">
           An independent technical information and archival reference platform for traditional archery sports.
         </p>
@@ -26,10 +26,10 @@ export default function AboutUsPage() {
       <article className="seo-article">
         <h2>Our Mission</h2>
         <p>
-          TeerResult2 was established with a singular objective: to deliver fast, transparent, and strictly verified outcomes for traditional archery competitions held across Meghalaya and neighboring border grounds.
+          TeerResult was established with a singular objective: to deliver fast, transparent, and strictly verified outcomes for traditional archery competitions held across Meghalaya and neighboring border grounds.
         </p>
         <p>
-          In a digital landscape often crowded with speculative predictions, unverified rumors, and unauthorized gambling promotions, TeerResult2 operates strictly as an independent journalistic and data-archiving portal.
+          In a digital landscape often crowded with speculative predictions, unverified rumors, and unauthorized gambling promotions, TeerResult operates strictly as an independent journalistic and data-archiving portal.
         </p>
 
         <h2>Core Editorial Values</h2>
@@ -50,7 +50,7 @@ export default function AboutUsPage() {
 
         <h2>Compliance and Ethics</h2>
         <p>
-          TeerResult2 is strictly an informational publication. We are not affiliated with, nor do we operate, any betting or lottery counters. We do not accept wagers, offer tips, or sell number guarantees. All information is provided for cultural interest and archival research.
+          TeerResult is strictly an informational publication. We are not affiliated with, nor do we operate, any betting or lottery counters. We do not accept wagers, offer tips, or sell number guarantees. All information is provided for cultural interest and archival research.
         </p>
       </article>
     </div>

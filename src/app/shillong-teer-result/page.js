@@ -2,27 +2,42 @@ import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
-  title: 'Shillong Teer Result Today - FR & SR Live | TeerResult2',
+  title: 'Shillong Teer Result Today - FR & SR Live | TeerResult',
   description:
-    'Live Shillong Teer Result Today for First Round (03:45 PM) & Second Round (04:45 PM). Real-time verified archery numbers, KHASA Polo Ground updates, and 30-day past history on TeerResult2.',
+    'Live Shillong Teer Result Today for First Round (03:45 PM) & Second Round (04:45 PM). Real-time verified archery numbers, KHASA Polo Ground updates, and 30-day past history on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/shillong-teer-result/',
+    canonical: 'https://teerresult24.com/shillong-teer-result/',
   },
 };
 
 export default async function ShillongTeerPage() {
   const todayStr = getTodayISTDateStr();
 
-  const category = await prisma.gameCategory.findUnique({
-    where: { slug: 'shillong-teer' },
-    include: {
-      results: {
-        orderBy: { dateStr: 'desc' },
-        take: 30,
+  let category = null;
+  try {
+    category = await prisma.gameCategory.findUnique({
+      where: { slug: 'shillong-teer' },
+      include: {
+        results: {
+          orderBy: { dateStr: 'desc' },
+          take: 30,
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.warn('[ShillongTeerPage] Database unavailable:', err.message || err);
+    category = {
+      name: 'Shillong Teer',
+      slug: 'shillong-teer',
+      location: 'Polo Grounds, Shillong, Meghalaya',
+      round1Time: '03:45 PM',
+      round2Time: '04:45 PM',
+      results: [],
+    };
+  }
 
   const todayResult = category?.results.find((r) => r.dateStr === todayStr);
   const isDeclared = Boolean(todayResult?.round1 && todayResult?.round2);
@@ -178,7 +193,7 @@ export default async function ShillongTeerPage() {
 
         <h3>Preservation of Leading Zeros</h3>
         <p>
-          At TeerResult2, we adhere strictly to official two-digit standards (00 to 99). If 804 arrows hit the target in the first round, the declared number is strictly recorded as <strong>04</strong>, rather than truncated to 4. This maintains data consistency across our historical database and prevents confusion for enthusiasts tracking archery score distributions.
+          At TeerResult, we adhere strictly to official two-digit standards (00 to 99). If 804 arrows hit the target in the first round, the declared number is strictly recorded as <strong>04</strong>, rather than truncated to 4. This maintains data consistency across our historical database and prevents confusion for enthusiasts tracking archery score distributions.
         </p>
 
         <h3>Frequently Asked Questions about Shillong Teer</h3>

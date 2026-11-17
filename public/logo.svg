@@ -1,0 +1,39 @@
+<svg width="64" height="64" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tlBadgeBg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0fdf4" />
+    </linearGradient>
+    <linearGradient id="tlGold" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <linearGradient id="tlEmerald" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <filter id="tlShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.2" />
+    </filter>
+  </defs>
+
+  <circle cx="24" cy="24" r="22" fill="url(#tlBadgeBg)" stroke="url(#tlGold)" stroke-width="2" filter="url(#tlShadow)" />
+  <circle cx="24" cy="24" r="16.5" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="2 2" fill="none" />
+  <circle cx="24" cy="24" r="12" stroke="url(#tlEmerald)" stroke-width="2.5" fill="none" opacity="0.9" />
+  <circle cx="24" cy="24" r="7.5" stroke="url(#tlGold)" stroke-width="2" fill="none" />
+
+  <circle cx="24" cy="24" r="4" fill="#dc2626" />
+  <circle cx="24" cy="24" r="1.5" fill="#ffffff" />
+
+  <line x1="8" y1="40" x2="35" y2="13" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" />
+  <line x1="10" y1="38" x2="33" y2="15" stroke="#f59e0b" stroke-width="0.8" stroke-linecap="round" opacity="0.8" />
+
+  <path d="M40 8 L31 11.5 L34.5 15 Z" fill="url(#tlGold)" stroke="#92400e" stroke-width="0.6" stroke-linejoin="round" />
+
+  <path d="M12 36 L7 38 L9 42 Z" fill="#dc2626" />
+  <path d="M15 33 L17 38 L20 35 Z" fill="url(#tlGold)" />
+  <path d="M10 41 L12 44 L15 42 Z" fill="#047857" />
+
+  <path d="M24 20.5 L24.8 23.2 L27.5 24 L24.8 24.8 L24 27.5 L23.2 24.8 L20.5 24 L23.2 23.2 Z" fill="#fef08a" opacity="0.95" />
+</svg>

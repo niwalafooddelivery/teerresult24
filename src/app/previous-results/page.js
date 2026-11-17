@@ -2,41 +2,60 @@ import prisma from '@/lib/prisma';
 import PreviousResultsTable from '@/components/PreviousResultsTable';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
-  title: 'Teer Previous Results – Date-Wise History | TeerResult2',
+  title: 'Teer Previous Results – Date-Wise History | TeerResult',
   description:
-    'Search and browse comprehensive past Teer results for Shillong, Khanapara, Juwai, and Night Teer. Filter by game and date with leading zeros preserved on TeerResult2.',
+    'Search and browse comprehensive past Teer results for Shillong, Khanapara, Juwai, and Night Teer. Filter by game and date with leading zeros preserved on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/previous-results/',
+    canonical: 'https://teerresult24.com/previous-results/',
   },
 };
 
 export default async function PreviousResultsPage() {
-  const [categories, totalCount, allHistory] = await Promise.all([
-    prisma.gameCategory.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' },
-    }),
-    prisma.teerResult.count(),
-    prisma.teerResult.findMany({
-      orderBy: [
-        { dateStr: 'desc' },
-        { category: { order: 'asc' } },
-      ],
-      take: 25,
-      include: {
-        category: {
-          select: {
-            name: true,
-            slug: true,
-            location: true,
-            round1Time: true,
-            round2Time: true,
+  let categories = [];
+  let totalCount = 0;
+  let allHistory = [];
+
+  try {
+    const res = await Promise.all([
+      prisma.gameCategory.findMany({
+        where: { isActive: true },
+        orderBy: { order: 'asc' },
+      }),
+      prisma.teerResult.count(),
+      prisma.teerResult.findMany({
+        orderBy: [
+          { dateStr: 'desc' },
+          { category: { order: 'asc' } },
+        ],
+        take: 25,
+        include: {
+          category: {
+            select: {
+              name: true,
+              slug: true,
+              location: true,
+              round1Time: true,
+              round2Time: true,
+            },
           },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
+    categories = res[0];
+    totalCount = res[1];
+    allHistory = res[2];
+  } catch (err) {
+    console.warn('[PreviousResultsPage] Database unavailable:', err.message || err);
+    categories = [
+      { id: '1', name: 'Shillong Teer', slug: 'shillong-teer' },
+      { id: '2', name: 'Khanapara Teer', slug: 'khanapara-teer' },
+      { id: '3', name: 'Juwai Teer', slug: 'juwai-teer' },
+      { id: '4', name: 'Shillong Night Teer', slug: 'shillong-night-teer' },
+    ];
+  }
 
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
@@ -63,7 +82,7 @@ export default async function PreviousResultsPage() {
       <article className="seo-article" style={{ marginTop: '40px' }}>
         <h2>Complete Archival Records and Verification Integrity</h2>
         <p>
-          Historical archery records on TeerResult2 are maintained with strict technical accuracy. Unlike casual scoreboards that truncate single digits (such as writing &quot;4&quot; instead of &quot;04&quot;), our database enforces exact two-digit notation (00 to 99). This guarantees that every record accurately matches the official archery bulletins recorded at Polo Grounds Shillong, Khanapara Guwahati, and Juwai Jaintia Hills.
+          Historical archery records on TeerResult are maintained with strict technical accuracy. Unlike casual scoreboards that truncate single digits (such as writing &quot;4&quot; instead of &quot;04&quot;), our database enforces exact two-digit notation (00 to 99). This guarantees that every record accurately matches the official archery bulletins recorded at Polo Grounds Shillong, Khanapara Guwahati, and Juwai Jaintia Hills.
         </p>
 
         <h3>Why Date-Wise Historical Analysis Matters</h3>

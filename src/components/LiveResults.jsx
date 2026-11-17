@@ -37,7 +37,7 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
           <h2 className="section-title">
             Today&apos;s Official Results
           </h2>
-          <p className="section-sub">
+          <p className="section-sub" suppressHydrationWarning>
             Daily archery session updates • Last checked at {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </p>
         </div>

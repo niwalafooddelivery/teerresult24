@@ -39,6 +39,17 @@ export async function validateOfficialGroundEvidence(options, db = prisma) {
     }
   }
 
+  // 3. Reject bare strings / manually typed text alone without structured ground evidence
+  // Manually typed bulletin references or arbitrary text strings are NOT independently authenticated official documents!
+  if (!linkedSourceRecord && (!officialEvidence || typeof officialEvidence !== 'object')) {
+    return {
+      valid: false,
+      error:
+        'Manually typed bulletin references or arbitrary text strings are strictly insufficient for independent official verification. Independent verification requires a documented SourceRecord in the database or structured ground evidence with authorized counter provenance.',
+    };
+  }
+
+  // 4. Validate structured official evidence
   let authority = '';
   let identifier = '';
   let notes = '';
@@ -46,31 +57,14 @@ export async function validateOfficialGroundEvidence(options, db = prisma) {
   let documentProofUrl = '';
 
   if (officialEvidence && typeof officialEvidence === 'object') {
-    authority = (officialEvidence.sourceAuthority || '').trim();
+    authority = (officialEvidence.sourceAuthority || officialEvidence.authority || '').trim();
     identifier = (officialEvidence.evidenceIdentifier || officialEvidence.bulletinNumber || officialEvidence.slipNumber || '').trim();
     notes = (officialEvidence.editorialNotes || '').trim();
     groundSourceType = (officialEvidence.groundSourceType || 'OFFICIAL_GROUND_BULLETIN').trim();
     documentProofUrl = (officialEvidence.documentProofUrl || officialEvidence.sourceUrl || '').trim();
-  } else if (typeof editorialEvidence === 'string' && editorialEvidence.trim()) {
-    const raw = editorialEvidence.trim();
-    const authMatch = raw.match(/Authority:\s*([^|;]+)/i);
-    const refMatch = raw.match(/(?:Ref|Reference|Doc|Bulletin|Slip):\s*([^|;]+)/i);
-    const notesMatch = raw.match(/Notes:\s*([^|;]+)/i);
-
-    if (authMatch && refMatch) {
-      authority = authMatch[1].trim();
-      identifier = refMatch[1].trim();
-      notes = notesMatch ? notesMatch[1].trim() : '';
-    } else {
-      const authorityPattern = /(khasi\s*hills|khasa|polo\s*ground|khanapara|juwai|jaintia|counter\s*syndicate|archery\s*association|sanctioned\s*counter|official\s*bulletin)/i;
-      const identifierPattern = /(bulletin\s*#?\s*\d+|slip\s*#?\s*\d+|sheet\s*#?\s*\d+|board\s*#?\s*\d+|ref\s*#?\s*[\w-]+|id\s*#?\s*[\w-]+|#\d{1,6}|\b\d{3,6}\b)/i;
-
-      if (authorityPattern.test(raw) && identifierPattern.test(raw)) {
-        authority = raw.match(authorityPattern)[0];
-        identifier = raw.match(identifierPattern)[0];
-        notes = raw;
-      }
-    }
+  } else if (linkedSourceRecord) {
+    authority = linkedSourceRecord.sourceName;
+    identifier = `SourceRecord-${linkedSourceRecord.id}`;
   }
 
   const isScraperDomain = (str) => {
@@ -84,7 +78,7 @@ export async function validateOfficialGroundEvidence(options, db = prisma) {
     );
   };
 
-  if (isScraperDomain(authority) || isScraperDomain(identifier)) {
+  if (isScraperDomain(authority) || isScraperDomain(identifier) || isScraperDomain(documentProofUrl)) {
     return {
       valid: false,
       error:
@@ -92,13 +86,26 @@ export async function validateOfficialGroundEvidence(options, db = prisma) {
     };
   }
 
-  // Requirement: Do not treat manually entered authority and bulletin text as independently verified evidence
-  // without a documented, reviewable source record or specific verified ground proof reference
-  if (!linkedSourceRecord && (!authority || authority.length < 5 || !identifier || identifier.length < 3)) {
+  // Enforce recognized sanctioned authorities
+  const recognizedAuthorities = [
+    'khasi hills archery sports association',
+    'khasa',
+    'polo ground archery association',
+    'polo ground',
+    'khanapara archery association',
+    'juwai archery club',
+    'jaintia archery association',
+    'sanctioned archery counter syndicate',
+  ];
+
+  const authorityLower = (authority || '').toLowerCase();
+  const isRecognized = recognizedAuthorities.some((a) => authorityLower.includes(a));
+
+  if (!linkedSourceRecord && (!isRecognized || !identifier || identifier.length < 3)) {
     return {
       valid: false,
       error:
-        'Official verification requires a documented, reviewable source record (sourceRecordId) or identifiable primary ground evidence (sanctioned authority and document reference). Arbitrary text is strictly insufficient.',
+        'Official verification requires a recognized, sanctioned ground authority (e.g. KHASA, Polo Ground) and a verifiable bulletin or counter slip identifier. Unverified or informal sources must be published as Editorially Approved or Unverified.',
     };
   }
 

@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy - User Data & Cookies Notice | TeerResult2',
+  title: 'Privacy Policy - User Data & Cookies Notice | TeerResult',
   description:
-    'Our privacy statement explaining minimal data collection, cookies usage for session preferences, and privacy practices on TeerResult2.',
+    'Our privacy statement explaining minimal data collection, cookies usage for session preferences, and privacy practices on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/privacy-policy/',
+    canonical: 'https://teerresult24.com/privacy-policy/',
   },
 };
 
@@ -19,14 +19,14 @@ export default function PrivacyPolicyPage() {
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">Privacy Policy</h1>
         <p className="hero-subtitle">
-          How TeerResult2 handles visitor data, analytics, and browser cookies.
+          How TeerResult handles visitor data, analytics, and browser cookies.
         </p>
       </section>
 
       <article className="seo-article">
         <h2>1. Information We Collect</h2>
         <p>
-          TeerResult2 is an open informational website. Visitors are not required to create an account or provide personal identifying information to browse live results, dream charts, or historical archives.
+          TeerResult is an open informational website. Visitors are not required to create an account or provide personal identifying information to browse live results, dream charts, or historical archives.
         </p>
         <p>
           Standard non-personally identifiable server logs (such as IP address, browser type, referring page, and operating system) may be automatically gathered to monitor platform performance and prevent malicious automated abuse.
@@ -39,7 +39,7 @@ export default function PrivacyPolicyPage() {
 
         <h2>3. Third-Party Links</h2>
         <p>
-          Our pages may contain links to external cultural or state documentation resources. TeerResult2 has no control over the privacy policies or practices of third-party websites.
+          Our pages may contain links to external cultural or state documentation resources. TeerResult has no control over the privacy policies or practices of third-party websites.
         </p>
 
         <h2>4. Policy Updates</h2>

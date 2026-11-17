@@ -2,27 +2,42 @@ import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
-  title: 'Khanapara Teer Result Today - FR & SR Live | TeerResult2',
+  title: 'Khanapara Teer Result Today - FR & SR Live | TeerResult',
   description:
-    'Live Khanapara Teer Result Today for First Round (04:10 PM) & Second Round (04:45 PM). Official Assam border archery outcomes, timely updates, and 30-day past history on TeerResult2.',
+    'Live Khanapara Teer Result Today for First Round (04:10 PM) & Second Round (04:45 PM). Official Assam border archery outcomes, timely updates, and 30-day past history on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/khanapara-teer-result/',
+    canonical: 'https://teerresult24.com/khanapara-teer-result/',
   },
 };
 
 export default async function KhanaparaTeerPage() {
   const todayStr = getTodayISTDateStr();
 
-  const category = await prisma.gameCategory.findUnique({
-    where: { slug: 'khanapara-teer' },
-    include: {
-      results: {
-        orderBy: { dateStr: 'desc' },
-        take: 30,
+  let category = null;
+  try {
+    category = await prisma.gameCategory.findUnique({
+      where: { slug: 'khanapara-teer' },
+      include: {
+        results: {
+          orderBy: { dateStr: 'desc' },
+          take: 30,
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.warn('[KhanaparaTeerPage] Database unavailable:', err.message || err);
+    category = {
+      name: 'Khanapara Teer',
+      slug: 'khanapara-teer',
+      location: 'Khanapara, Guwahati, Assam',
+      round1Time: '04:10 PM',
+      round2Time: '04:45 PM',
+      results: [],
+    };
+  }
 
   const todayResult = category?.results.find((r) => r.dateStr === todayStr);
   const isDeclared = Boolean(todayResult?.round1 && todayResult?.round2);

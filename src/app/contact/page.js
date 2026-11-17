@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Contact Us - Editorial Desk & Discrepancy Reporting | TeerResult2',
+  title: 'Contact Us - Editorial Desk & Discrepancy Reporting | TeerResult',
   description:
-    'Contact the TeerResult2 editorial team for data inquiries, correction reports, and factual feedback regarding Meghalaya archery outcome reporting.',
+    'Contact the TeerResult editorial team for data inquiries, correction reports, and factual feedback regarding Meghalaya archery outcome reporting.',
   alternates: {
-    canonical: 'https://teerresult2.com/contact/',
+    canonical: 'https://teerresult24.com/contact/',
   },
 };
 
@@ -37,7 +37,7 @@ export default function ContactPage() {
 
         <h2>Direct Contact Channels</h2>
         <p>
-          <strong>Email:</strong> editorial@teerresult2.com<br />
+          <strong>Email:</strong> editorial@teerresult24.com<br />
           <strong>Support Hours:</strong> Monday – Saturday, 10:00 AM – 11:30 PM IST<br />
           <strong>Response Time:</strong> Scoring discrepancy notices are typically investigated and processed within 15 to 30 minutes of official confirmation.
         </p>

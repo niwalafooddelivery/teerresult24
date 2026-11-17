@@ -3,9 +3,9 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 export const metadata = {
-  title: 'Teer Result Today - Shillong, Khanapara & Juwai Live | TeerResult2',
+  title: 'Teer Result Today - Shillong, Khanapara & Juwai Live | TeerResult',
   description:
-    'Get fastest live Teer Result for Shillong Teer, Khanapara Teer, Juwai Teer, and Shillong Night Teer. Real-time verified updates on TeerResult2.',
+    'Get fastest live Teer Result for Shillong Teer, Khanapara Teer, Juwai Teer, and Shillong Night Teer. Real-time verified updates on TeerResult.',
   keywords: [
     'Teer Result',
     'Shillong Teer Result',
@@ -16,20 +16,20 @@ export const metadata = {
     'Teer Dream Numbers',
     'Previous Teer Results',
   ],
-  authors: [{ name: 'TeerResult2 Team' }],
-  metadataBase: new URL('https://teerresult2.com'),
+  authors: [{ name: 'TeerResult Team' }],
+  metadataBase: new URL('https://teerresult24.com'),
   openGraph: {
-    title: 'Teer Result Today - Shillong, Khanapara & Juwai Teer Live | TeerResult2',
+    title: 'Teer Result Today - Shillong, Khanapara & Juwai Teer Live | TeerResult',
     description:
-      'Fast, verified Teer Result live updates, educational history, and searchable past result archive on TeerResult2.',
-    url: 'https://teerresult2.com',
-    siteName: 'TeerResult2',
+      'Fast, verified Teer Result live updates, educational history, and searchable past result archive on TeerResult.',
+    url: 'https://teerresult24.com',
+    siteName: 'TeerResult',
     locale: 'en_IN',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Teer Result Today - Live Updates | TeerResult2',
+    title: 'Teer Result Today - Live Updates | TeerResult',
     description: 'Fastest verified Teer Result, Shillong Teer and Khanapara Teer outcomes.',
   },
   robots: {

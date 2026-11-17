@@ -7,6 +7,6 @@ export default function robots() {
         disallow: ['/admin/', '/api/admin/'],
       },
     ],
-    sitemap: 'https://teerresult2.com/sitemap.xml',
+    sitemap: 'https://teerresult24.com/sitemap.xml',
   };
 }

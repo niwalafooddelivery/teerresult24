@@ -1,11 +1,11 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'What is Teer? Rules, History & Archery Calculation Guide | TeerResult2',
+  title: 'What is Teer? Rules, History & Archery Calculation Guide | TeerResult',
   description:
     'Comprehensive guide explaining the traditional Khasi sport of Teer in Meghalaya, how arrows are shot and counted, official club rules, and score calculation.',
   alternates: {
-    canonical: 'https://teerresult2.com/what-is-teer/',
+    canonical: 'https://teerresult24.com/what-is-teer/',
   },
 };
 

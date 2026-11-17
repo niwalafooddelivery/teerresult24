@@ -1,27 +1,35 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
-  title: 'Correction Policy - Archery Score Audit & Transparency | TeerResult2',
+  title: 'Correction Policy - Archery Score Audit & Transparency | TeerResult',
   description:
-    'Our transparent policy and public audit log for correcting verified archery records, official recounts, and bulletin discrepancies on TeerResult2.',
+    'Our transparent policy and public audit log for correcting verified archery records, official recounts, and bulletin discrepancies on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/correction-policy/',
+    canonical: 'https://teerresult24.com/correction-policy/',
   },
 };
 
 export default async function CorrectionPolicyPage() {
-  const recentCorrections = await prisma.correctionLog.findMany({
-    take: 20,
-    orderBy: { createdAt: 'desc' },
-    include: {
-      result: {
-        include: {
-          category: true,
+  let recentCorrections = [];
+  try {
+    recentCorrections = await prisma.correctionLog.findMany({
+      take: 20,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        result: {
+          include: {
+            category: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.warn('[CorrectionPolicyPage] Database unavailable:', err.message || err);
+    recentCorrections = [];
+  }
 
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
@@ -32,14 +40,14 @@ export default async function CorrectionPolicyPage() {
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">Editorial Correction Policy</h1>
         <p className="hero-subtitle">
-          How TeerResult2 ensures data accuracy, investigates discrepancies, and maintains a public audit log.
+          How TeerResult ensures data accuracy, investigates discrepancies, and maintains a public audit log.
         </p>
       </section>
 
       <article className="seo-article">
         <h2>Commitment to Data Integrity</h2>
         <p>
-          At TeerResult2, we prioritize speed, but never at the expense of verified precision. Every archery outcome published on our platform is cross-referenced with authorized ground bulletins and verified field observers.
+          At TeerResult, we prioritize speed, but never at the expense of verified precision. Every archery outcome published on our platform is cross-referenced with authorized ground bulletins and verified field observers.
         </p>
         <p>
           On rare occasions, official organizing bodies—such as the Khasi Hills Archery Sports Association—may conduct a recount due to disputed arrows or clerical misreporting during initial verbal announcements. When an official revision occurs:

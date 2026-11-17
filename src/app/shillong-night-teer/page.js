@@ -2,27 +2,42 @@ import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
-  title: 'Shillong Night Teer Result Today - FR & SR Live | TeerResult2',
+  title: 'Shillong Night Teer Result Today - FR & SR Live | TeerResult',
   description:
-    'Check Shillong Night Teer result live for Round 1 (10:15 PM) and Round 2 (11:15 PM). Verified archery scores, timing, and date-wise past records on TeerResult2.',
+    'Check Shillong Night Teer result live for Round 1 (10:15 PM) and Round 2 (11:15 PM). Verified archery scores, timing, and date-wise past records on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/shillong-night-teer/',
+    canonical: 'https://teerresult24.com/shillong-night-teer/',
   },
 };
 
 export default async function ShillongNightTeerPage() {
   const todayStr = getTodayISTDateStr();
 
-  const category = await prisma.gameCategory.findUnique({
-    where: { slug: 'shillong-night-teer' },
-    include: {
-      results: {
-        orderBy: { dateStr: 'desc' },
-        take: 30,
+  let category = null;
+  try {
+    category = await prisma.gameCategory.findUnique({
+      where: { slug: 'shillong-night-teer' },
+      include: {
+        results: {
+          orderBy: { dateStr: 'desc' },
+          take: 30,
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.warn('[ShillongNightTeerPage] Database unavailable:', err.message || err);
+    category = {
+      name: 'Shillong Night Teer',
+      slug: 'shillong-night-teer',
+      location: 'Shillong, Meghalaya',
+      round1Time: '10:30 PM',
+      round2Time: '11:30 PM',
+      results: [],
+    };
+  }
 
   const todayResult = category?.results.find((r) => r.dateStr === todayStr);
   const isDeclared = Boolean(todayResult?.round1 && todayResult?.round2);
@@ -158,7 +173,7 @@ export default async function ShillongNightTeerPage() {
           Similar to standard Khasi Hills archery traditions, designated archers shoot a set quantity of arrows into a standardized cane target. Target marshals and score clerks extract every arrow that successfully penetrates the target circumference, verify validity, group them into tallies of ten, and count the aggregate total. The final two digits of this total constitute the official declared result number (from 00 to 99).
         </p>
         <p>
-          For example, if 874 arrows land firmly on target in the first round, the declared FR score is <strong>74</strong>. If 609 arrows hit during the second round, the SR score is <strong>09</strong>. TeerResult2 always preserves the leading zero to guarantee technical accuracy and eliminate ambiguity.
+          For example, if 874 arrows land firmly on target in the first round, the declared FR score is <strong>74</strong>. If 609 arrows hit during the second round, the SR score is <strong>09</strong>. TeerResult always preserves the leading zero to guarantee technical accuracy and eliminate ambiguity.
         </p>
 
         <h3>Night Teer Schedule and Timing Guidelines</h3>
@@ -180,7 +195,7 @@ export default async function ShillongNightTeerPage() {
           </div>
           <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-main)' }}>
-              How does TeerResult2 verify night results?
+              How does TeerResult verify night results?
             </h4>
             <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
               We record scores directly from corroborated score bulletins, verifying two-digit integrity (00 to 99) before publishing. If a number is pending, we strictly display <code>--</code> rather than speculative predictions.

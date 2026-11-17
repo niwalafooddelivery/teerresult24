@@ -80,7 +80,14 @@ button {
 .header-logo {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   text-decoration: none;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.header-logo:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
 }
 
 .logo-text {
@@ -88,6 +95,12 @@ button {
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -0.5px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.logo-accent {
+  color: #fbbf24;
 }
 
 /* Desktop Navigation Buttons */

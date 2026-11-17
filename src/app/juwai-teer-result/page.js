@@ -2,27 +2,42 @@ import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate } from '@/lib/date-utils';
 import Link from 'next/link';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
-  title: 'Juwai Teer Result Today - FR & SR Live | TeerResult2',
+  title: 'Juwai Teer Result Today - FR & SR Live | TeerResult',
   description:
-    'Live Juwai Teer Result Today for First Round (02:05 PM) & Second Round (02:45 PM). Real-time West Jaintia Hills archery outcome announcements and 30-day archive on TeerResult2.',
+    'Live Juwai Teer Result Today for First Round (02:05 PM) & Second Round (02:45 PM). Real-time West Jaintia Hills archery outcome announcements and 30-day archive on TeerResult.',
   alternates: {
-    canonical: 'https://teerresult2.com/juwai-teer-result/',
+    canonical: 'https://teerresult24.com/juwai-teer-result/',
   },
 };
 
 export default async function JuwaiTeerPage() {
   const todayStr = getTodayISTDateStr();
 
-  const category = await prisma.gameCategory.findUnique({
-    where: { slug: 'juwai-teer' },
-    include: {
-      results: {
-        orderBy: { dateStr: 'desc' },
-        take: 30,
+  let category = null;
+  try {
+    category = await prisma.gameCategory.findUnique({
+      where: { slug: 'juwai-teer' },
+      include: {
+        results: {
+          orderBy: { dateStr: 'desc' },
+          take: 30,
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    console.warn('[JuwaiTeerPage] Database unavailable:', err.message || err);
+    category = {
+      name: 'Juwai Teer',
+      slug: 'juwai-teer',
+      location: 'Juwai, West Jaintia Hills, Meghalaya',
+      round1Time: '02:00 PM',
+      round2Time: '02:45 PM',
+      results: [],
+    };
+  }
 
   const todayResult = category?.results.find((r) => r.dateStr === todayStr);
   const isDeclared = Boolean(todayResult?.round1 && todayResult?.round2);

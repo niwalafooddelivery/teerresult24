@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import TeerLogo from '@/components/TeerLogo';
 
 export default function Header() {
   const pathname = usePathname();
@@ -44,8 +45,11 @@ export default function Header() {
     <header className="site-header">
       <div className="container header-container">
         {/* Brand Logo */}
-        <Link href="/" className="header-logo" title="TeerResult2 Home">
-          <span className="logo-text">TeerResult2</span>
+        <Link href="/" className="header-logo" title="TeerResult Home">
+          <TeerLogo size={36} />
+          <span className="logo-text">
+            Teer<span className="logo-accent">Result</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation */}

@@ -1,5 +1,5 @@
 export default function sitemap() {
-  const baseUrl = 'https://teerresult2.com';
+  const baseUrl = 'https://teerresult24.com';
 
   const routes = [
     { path: '', priority: 1.0, changeFrequency: 'always' },
