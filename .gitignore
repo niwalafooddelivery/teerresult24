@@ -45,6 +45,12 @@ prisma/dev.db*
 # vercel
 .vercel
 
+# cloudflare workers / open-next
+.open-next/
+.wrangler/
+.dev.vars
+.dev.vars.*
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
