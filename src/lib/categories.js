@@ -95,8 +95,15 @@ export async function ensureOfficialCategories(client) {
   const synced = [];
   for (const cat of OFFICIAL_CATEGORIES) {
     try {
-      const existing = await client.gameCategory.findUnique({
-        where: { slug: cat.slug },
+      // Search by slug, name, or id to avoid duplicate name constraint violations
+      const existing = await client.gameCategory.findFirst({
+        where: {
+          OR: [
+            { slug: cat.slug },
+            { name: cat.name },
+            { id: cat.id },
+          ],
+        },
       });
 
       if (existing) {
@@ -104,6 +111,7 @@ export async function ensureOfficialCategories(client) {
           where: { id: existing.id },
           data: {
             name: cat.name,
+            slug: cat.slug,
             location: cat.location,
             round1Time: cat.round1Time,
             round2Time: cat.round2Time,

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getTodayISTDateStr } from '@/lib/date-utils';
 import { ensureOfficialCategories, OFFICIAL_CATEGORIES } from '@/lib/categories';
+import { ensureDatabaseBootstrap } from '@/lib/db-bootstrap';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,9 +23,10 @@ export async function GET() {
         },
       });
 
-      // If database is initialized but unseeded, auto-seed the 4 official categories
+      // If database is unseeded, auto-bootstrap and seed the 4 official categories
       if (!categories || categories.length === 0) {
-        await ensureOfficialCategories(prisma);
+        await ensureDatabaseBootstrap(prisma).catch(() => {});
+        await ensureOfficialCategories(prisma).catch(() => {});
         categories = await prisma.gameCategory.findMany({
           where: { isActive: true },
           orderBy: { order: 'asc' },
@@ -37,7 +39,23 @@ export async function GET() {
         });
       }
     } catch (dbErr) {
-      console.warn('[api/results/today] Database query failed, using canonical fallback:', dbErr.message || dbErr);
+      console.warn('[api/results/today] Database query failed, attempting self-healing bootstrap:', dbErr.message || dbErr);
+      try {
+        await ensureDatabaseBootstrap(prisma);
+        await ensureOfficialCategories(prisma);
+        categories = await prisma.gameCategory.findMany({
+          where: { isActive: true },
+          orderBy: { order: 'asc' },
+          include: {
+            results: {
+              where: { dateStr: todayStr },
+              take: 1,
+            },
+          },
+        });
+      } catch (retryErr) {
+        console.warn('[api/results/today] Retry after bootstrap failed, using canonical fallback:', retryErr.message || retryErr);
+      }
     }
 
     // Graceful fallback if database has no categories or is unmigrated

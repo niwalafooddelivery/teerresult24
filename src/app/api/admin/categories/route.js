@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getOfficialCategories } from '@/lib/categories';
+import { ensureDatabaseBootstrap } from '@/lib/db-bootstrap';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const categories = await getOfficialCategories(prisma);
+    let categories = await getOfficialCategories(prisma);
+
+    if (!categories || categories.length === 0) {
+      await ensureDatabaseBootstrap(prisma);
+      categories = await getOfficialCategories(prisma);
+    }
 
     return NextResponse.json({
       success: true,

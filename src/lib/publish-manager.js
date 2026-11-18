@@ -7,6 +7,7 @@
 import prisma from './prisma.js';
 import { validateTeerNumber, getTodayISTDateStr, isValidCalendarDate } from './date-utils.js';
 import { ensureOfficialCategories, resolveCanonicalCategorySlug } from './categories.js';
+import { ensureDatabaseBootstrap } from './db-bootstrap.js';
 
 /**
  * Validates that an evidence URL is a syntactically valid HTTP/HTTPS URL.
@@ -112,8 +113,18 @@ export async function recordAdminResult(params, db = prisma) {
   // Dynamic Category Resolution:
   // Resolves category whether categoryId is a canonical slug, legacy identifier (e.g. cat_khanapara_teer), database CUID, or human name
   const canonicalSlug = resolveCanonicalCategorySlug(cleanCatInput);
+
+  const CANONICAL_NAMES = {
+    'shillong-teer': 'Shillong Teer',
+    'khanapara-teer': 'Khanapara Teer',
+    'juwai-teer': 'Juwai Teer',
+    'shillong-night-teer': 'Shillong Night Teer',
+  };
+  const targetName = CANONICAL_NAMES[canonicalSlug] || cleanCatInput;
+
   const whereOr = [
     { slug: canonicalSlug },
+    { name: targetName },
     { id: cleanCatInput },
     { id: canonicalSlug },
     { slug: cleanCatInput },
@@ -121,32 +132,40 @@ export async function recordAdminResult(params, db = prisma) {
   ];
 
   let category = null;
+  let lastDbError = null;
+
   try {
     category = await db.gameCategory.findFirst({
       where: { OR: whereOr },
     });
+  } catch (initialErr) {
+    lastDbError = initialErr;
+    console.warn('[recordAdminResult] Initial category lookup error:', initialErr.message || initialErr);
+  }
 
-    // If category not found, attempt safe idempotent auto-seed and query again
-    if (!category) {
-      await ensureOfficialCategories(db).catch((seedErr) => {
-        console.warn('[recordAdminResult] ensureOfficialCategories warning:', seedErr.message || seedErr);
-      });
-      category = await db.gameCategory.findFirst({
-        where: { OR: whereOr },
-      });
-    }
-  } catch (catLookupErr) {
-    console.warn('[recordAdminResult] Database error resolving category:', catLookupErr.message || catLookupErr);
+  // If not found or initial query failed, run self-healing bootstrap and auto-seeding
+  if (!category) {
     try {
+      await ensureDatabaseBootstrap(db);
       await ensureOfficialCategories(db);
       category = await db.gameCategory.findFirst({
         where: { OR: whereOr },
       });
-    } catch {}
+      lastDbError = null; // Cleared on recovery
+    } catch (bootstrapErr) {
+      lastDbError = bootstrapErr;
+      console.warn('[recordAdminResult] Self-healing bootstrap error:', bootstrapErr.message || bootstrapErr);
+    }
   }
 
   if (!category) {
-    const err = new Error(`Invalid competition category "${cleanCatInput}". Category could not be resolved in the database.`);
+    if (lastDbError) {
+      const sanitized = lastDbError.message.split('\n')[0].replace(/postgres:\/\/[^@]+@/g, 'postgres://***@');
+      const err = new Error(`Database error resolving category "${cleanCatInput}": ${sanitized}`);
+      err.statusCode = 500;
+      throw err;
+    }
+    const err = new Error(`Invalid competition category "${cleanCatInput}". Category could not be found in database.`);
     err.statusCode = 400;
     throw err;
   }

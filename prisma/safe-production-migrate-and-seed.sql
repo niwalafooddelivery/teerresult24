@@ -183,7 +183,7 @@ END $$;
 
 INSERT INTO "GameCategory" ("id", "name", "slug", "location", "round1Time", "round2Time", "description", "order", "isActive", "createdAt", "updatedAt")
 VALUES
-    ('cat_shillong_teer', 'Shillong Teer', 'shillong-teer', 'Polo Grounds, Shillong, Meghalaya', '03:45 PM', '04:45 PM', 'Official Khasi Hills Archery Sports Association daily competition results.', 1, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ('shillong-teer', 'Shillong Teer', 'shillong-teer', 'Polo Grounds, Shillong, Meghalaya', '03:45 PM', '04:45 PM', 'Official Khasi Hills Archery Sports Association daily competition results.', 1, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("slug") DO UPDATE SET
     "name" = EXCLUDED."name",
     "location" = EXCLUDED."location",
@@ -196,7 +196,7 @@ ON CONFLICT ("slug") DO UPDATE SET
 
 INSERT INTO "GameCategory" ("id", "name", "slug", "location", "round1Time", "round2Time", "description", "order", "isActive", "createdAt", "updatedAt")
 VALUES
-    ('cat_khanapara_teer', 'Khanapara Teer', 'khanapara-teer', 'Ri-Bhoi District, Assam/Meghalaya Border', '04:10 PM', '04:45 PM', 'Daily Guwahati / Khanapara traditional archery outcome.', 2, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ('khanapara-teer', 'Khanapara Teer', 'khanapara-teer', 'Ri-Bhoi District, Assam/Meghalaya Border', '04:10 PM', '04:45 PM', 'Daily Guwahati / Khanapara traditional archery outcome.', 2, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("slug") DO UPDATE SET
     "name" = EXCLUDED."name",
     "location" = EXCLUDED."location",
@@ -209,7 +209,7 @@ ON CONFLICT ("slug") DO UPDATE SET
 
 INSERT INTO "GameCategory" ("id", "name", "slug", "location", "round1Time", "round2Time", "description", "order", "isActive", "createdAt", "updatedAt")
 VALUES
-    ('cat_juwai_teer', 'Juwai Teer', 'juwai-teer', 'Jowai, West Jaintia Hills, Meghalaya', '02:05 PM', '02:45 PM', 'West Jaintia Hills afternoon archery session results.', 3, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ('juwai-teer', 'Juwai Teer', 'juwai-teer', 'Jowai, West Jaintia Hills, Meghalaya', '02:05 PM', '02:45 PM', 'West Jaintia Hills afternoon archery session results.', 3, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("slug") DO UPDATE SET
     "name" = EXCLUDED."name",
     "location" = EXCLUDED."location",
@@ -222,7 +222,7 @@ ON CONFLICT ("slug") DO UPDATE SET
 
 INSERT INTO "GameCategory" ("id", "name", "slug", "location", "round1Time", "round2Time", "description", "order", "isActive", "createdAt", "updatedAt")
 VALUES
-    ('cat_shillong_night_teer', 'Shillong Night Teer', 'shillong-night-teer', 'Polo Grounds / Authorized Club (Night Session)', '10:15 PM', '11:15 PM', 'Night edition archery session outcome in Meghalaya.', 4, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ('shillong-night-teer', 'Shillong Night Teer', 'shillong-night-teer', 'Polo Grounds / Authorized Club (Night Session)', '10:15 PM', '11:15 PM', 'Night edition archery session outcome in Meghalaya.', 4, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("slug") DO UPDATE SET
     "name" = EXCLUDED."name",
     "location" = EXCLUDED."location",
