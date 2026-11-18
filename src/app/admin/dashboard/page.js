@@ -144,7 +144,7 @@ export default function AdminDashboardPage() {
 
   const handleSelectGame = (catId) => {
     setSelectedCategoryId(catId);
-    const existing = todayResults.find((r) => r.id === catId);
+    const existing = todayResults.find((r) => r.id === catId || r.slug === catId);
     if (existing) {
       setRound1(existing.round1 || '');
       setRound2(existing.round2 || '');
@@ -646,7 +646,7 @@ export default function AdminDashboardPage() {
               {todayResults.map((r) => {
                 const frDisplay = r.round1 ? `FR: ${r.round1}` : 'FR: Awaiting Result';
                 const srDisplay = r.round2 ? `SR: ${r.round2}` : 'SR: Awaiting Result';
-                const isSelected = selectedCategoryId === r.id;
+                const isSelected = selectedCategoryId === r.id || selectedCategoryId === r.slug;
 
                 let badgeLabel = 'Awaiting Result';
                 let badgeStyle = { background: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1' };

@@ -82,6 +82,7 @@ export async function ensureOfficialCategories(client) {
       } else {
         const created = await client.gameCategory.create({
           data: {
+            id: cat.id,
             name: cat.name,
             slug: cat.slug,
             location: cat.location,
