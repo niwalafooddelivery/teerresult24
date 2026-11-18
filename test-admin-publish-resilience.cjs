@@ -196,7 +196,7 @@ async function runTests() {
       }, prisma);
       assert(false, 'Should reject unknown category');
     } catch (err) {
-      assert(err.statusCode === 400 && err.message.includes('could not be resolved'), 'Throws 400 for unknown category with clear diagnostic');
+      assert(err.statusCode === 400 && (err.message.includes('could not be found') || err.message.includes('could not be resolved')), 'Throws 400 for unknown category with clear diagnostic');
     }
   }
 
