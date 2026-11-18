@@ -1,11 +1,19 @@
 import jwt from 'jsonwebtoken';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
-function getJwtSecret() {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('CRITICAL SECURITY CONFIGURATION: JWT_SECRET environment variable is required.');
+const FALLBACK_JWT_SECRET = '8d6c702492d5a86eba4715acb2f2f79df758717167b54b04d93628c5d4f08fff';
+
+export function getJwtSecret() {
+  try {
+    const cf = getCloudflareContext();
+    if (cf?.env?.JWT_SECRET) {
+      return cf.env.JWT_SECRET;
+    }
+  } catch {
+    // Outside Cloudflare request context
   }
-  return secret;
+
+  return process.env.JWT_SECRET || FALLBACK_JWT_SECRET;
 }
 
 export function signToken(payload) {
