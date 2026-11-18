@@ -9,7 +9,7 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "YOUR_HYPERDRIVE_ID",
+      "id": "0065e4cbbf8b417da645221ab4e53bd6",
       "localConnectionString": "postgresql://postgres:postgres@127.0.0.1:5432/neondb"
     }
   ],
