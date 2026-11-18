@@ -56,28 +56,28 @@ export default function AdminDashboardPage() {
       setStatusError('');
 
       // 1. Verify Authentication
-      const authRes = await fetch('/api/admin/me');
+      const authRes = await fetch('/api/admin/me/');
       const authData = await authRes.json();
       if (!authRes.ok || !authData.authenticated) {
         router.push('/admin/login');
         return;
       }
 
-      // 2. Fetch categories from dedicated endpoint /api/admin/categories
+      // 2. Fetch categories from dedicated endpoint /api/admin/categories/
       let cats = [];
       try {
-        const catRes = await fetch('/api/admin/categories');
+        const catRes = await fetch('/api/admin/categories/');
         const catData = await catRes.json();
         if (catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
           cats = catData.categories;
         }
       } catch (catErr) {
-        console.warn('Failed to fetch from /api/admin/categories:', catErr);
+        console.warn('Failed to fetch from /api/admin/categories/:', catErr);
       }
 
       // 3. Load today results
       try {
-        const res = await fetch('/api/results/today');
+        const res = await fetch('/api/results/today/');
         const data = await res.json();
         if (data.success && Array.isArray(data.results)) {
           setTodayResults(data.results);
@@ -110,7 +110,7 @@ export default function AdminDashboardPage() {
 
       // 4. Load pending reviews
       try {
-        const reviewsRes = await fetch('/api/admin/reviews?status=PENDING');
+        const reviewsRes = await fetch('/api/admin/reviews/?status=PENDING');
         const reviewsData = await reviewsRes.json();
         if (reviewsData.success) {
           setPendingReviews(reviewsData.reviews || []);
@@ -129,7 +129,7 @@ export default function AdminDashboardPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/admin/logout', { method: 'POST' });
+      await fetch('/api/admin/logout/', { method: 'POST' });
       router.push('/admin/login');
     } catch {
       router.push('/admin/login');
@@ -170,7 +170,7 @@ export default function AdminDashboardPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/admin/publish', {
+      const res = await fetch('/api/admin/publish/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -205,7 +205,7 @@ export default function AdminDashboardPage() {
     setMessage({ text: '', type: '' });
     try {
       const payload = { reviewId, action, ...options };
-      const res = await fetch('/api/admin/reviews', {
+      const res = await fetch('/api/admin/reviews/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -227,7 +227,7 @@ export default function AdminDashboardPage() {
     setSyncLoading(true);
     setMessage({ text: '', type: '' });
     try {
-      const res = await fetch('/api/admin/sync', { method: 'POST' });
+      const res = await fetch('/api/admin/sync/', { method: 'POST' });
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || data.message || 'Sync failed');
