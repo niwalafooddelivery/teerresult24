@@ -103,7 +103,7 @@ export default function AdminDashboardPage() {
 
       setCategories(cats);
       if (cats.length > 0) {
-        setSelectedCategoryId((prev) => (prev && cats.some((c) => c.id === prev) ? prev : cats[0].id));
+        setSelectedCategoryId((prev) => (prev && cats.some((c) => (c.slug || c.id) === prev || c.id === prev) ? prev : (cats[0].slug || cats[0].id)));
       } else {
         setCategoriesError('No competition categories found in database.');
       }
@@ -459,7 +459,7 @@ export default function AdminDashboardPage() {
                   required
                 >
                   {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.slug || c.id} value={c.slug || c.id}>
                       {c.name} {c.round1Time && c.round2Time ? `(${c.round1Time} / ${c.round2Time})` : ''}
                     </option>
                   ))}
@@ -661,8 +661,8 @@ export default function AdminDashboardPage() {
 
                 return (
                   <div
-                    key={r.id}
-                    onClick={() => handleSelectGame(r.id)}
+                    key={r.slug || r.id}
+                    onClick={() => handleSelectGame(r.slug || r.id)}
                     style={{
                       padding: '12px 14px',
                       borderRadius: 'var(--radius-md)',

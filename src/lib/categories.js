@@ -5,7 +5,7 @@
 
 export const OFFICIAL_CATEGORIES = [
   {
-    id: 'cat_shillong_teer',
+    id: 'shillong-teer',
     name: 'Shillong Teer',
     slug: 'shillong-teer',
     location: 'Polo Grounds, Shillong, Meghalaya',
@@ -16,7 +16,7 @@ export const OFFICIAL_CATEGORIES = [
     isActive: true,
   },
   {
-    id: 'cat_khanapara_teer',
+    id: 'khanapara-teer',
     name: 'Khanapara Teer',
     slug: 'khanapara-teer',
     location: 'Ri-Bhoi District, Assam/Meghalaya Border',
@@ -27,7 +27,7 @@ export const OFFICIAL_CATEGORIES = [
     isActive: true,
   },
   {
-    id: 'cat_juwai_teer',
+    id: 'juwai-teer',
     name: 'Juwai Teer',
     slug: 'juwai-teer',
     location: 'Jowai, West Jaintia Hills, Meghalaya',
@@ -38,7 +38,7 @@ export const OFFICIAL_CATEGORIES = [
     isActive: true,
   },
   {
-    id: 'cat_shillong_night_teer',
+    id: 'shillong-night-teer',
     name: 'Shillong Night Teer',
     slug: 'shillong-night-teer',
     location: 'Polo Grounds / Authorized Club (Night Session)',
@@ -51,9 +51,43 @@ export const OFFICIAL_CATEGORIES = [
 ];
 
 /**
+ * Resolves any category input (slug, legacy identifier with cat_ prefix, full name, or variants)
+ * to the project's canonical slug.
+ *
+ * Examples:
+ *   'cat_khanapara_teer' -> 'khanapara-teer'
+ *   'cat-khanapara-teer' -> 'khanapara-teer'
+ *   'Khanapara Teer'     -> 'khanapara-teer'
+ *   'khanapara'          -> 'khanapara-teer'
+ *   'shillong-teer'      -> 'shillong-teer'
+ */
+export function resolveCanonicalCategorySlug(input) {
+  if (!input || typeof input !== 'string') return '';
+  let s = input.trim().toLowerCase();
+  if (s.startsWith('cat_')) s = s.slice(4);
+  if (s.startsWith('cat-')) s = s.slice(4);
+  s = s.replace(/[_\s]+/g, '-');
+
+  const CANONICAL_MAP = {
+    'shillong': 'shillong-teer',
+    'shillong-teer': 'shillong-teer',
+    'khanapara': 'khanapara-teer',
+    'khanapara-teer': 'khanapara-teer',
+    'juwai': 'juwai-teer',
+    'juwai-teer': 'juwai-teer',
+    'night': 'shillong-night-teer',
+    'night-teer': 'shillong-night-teer',
+    'shillong-night': 'shillong-night-teer',
+    'shillong-night-teer': 'shillong-night-teer',
+  };
+
+  return CANONICAL_MAP[s] || s;
+}
+
+/**
  * Ensures all four official competition categories exist in the database.
  * Uses slug uniqueness to update or insert without creating duplicates.
- * Preserves existing database IDs.
+ * Preserves existing database IDs (e.g. existing CUIDs or customized IDs).
  */
 export async function ensureOfficialCategories(client) {
   if (!client || !client.gameCategory) return OFFICIAL_CATEGORIES;
@@ -82,7 +116,7 @@ export async function ensureOfficialCategories(client) {
       } else {
         const created = await client.gameCategory.create({
           data: {
-            id: cat.id,
+            id: cat.slug,
             name: cat.name,
             slug: cat.slug,
             location: cat.location,

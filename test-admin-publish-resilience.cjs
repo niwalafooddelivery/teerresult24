@@ -52,7 +52,7 @@ async function runTests() {
   console.log('================================================================\n');
 
   const { validateTeerNumber, getTodayISTDateStr } = await import('./src/lib/date-utils.js');
-  const { ensureOfficialCategories, OFFICIAL_CATEGORIES } = await import('./src/lib/categories.js');
+  const { ensureOfficialCategories, resolveCanonicalCategorySlug, OFFICIAL_CATEGORIES } = await import('./src/lib/categories.js');
   const { recordAdminResult, isValidEvidenceUrl } = await import('./src/lib/publish-manager.js');
 
   const adminUser = { id: 'admin1', username: 'admin', name: 'Chief Editor', role: 'ADMIN' };
@@ -95,7 +95,7 @@ async function runTests() {
     }
   }
 
-  // TEST 3: Dynamic Category Resolution & Auto-seeding
+  // TEST 3: Dynamic Category Resolution (cat_ prefix, slugs, names, auto-seeding)
   console.log('\nTest Suite 3: Dynamic Category Resolution & Auto-seeding');
   {
     // Clean categories to test dynamic auto-seed
@@ -117,6 +117,51 @@ async function runTests() {
 
     const catsAfter = await prisma.gameCategory.count();
     assert(catsAfter === 4, `All 4 official categories auto-seeded into database (count: ${catsAfter})`);
+
+    // TEST RESOLUTION OF "cat_khanapara_teer" (User's reported production issue)
+    const resKhanaparaLegacy = await recordAdminResult({
+      categoryId: 'cat_khanapara_teer',
+      dateStr: '2026-11-18',
+      round1: '10',
+      round2: '20',
+      action: 'submit',
+      user: adminUser,
+    }, prisma);
+    assert(resKhanaparaLegacy.success === true, 'Resolves "cat_khanapara_teer" and records result successfully');
+    assert(resKhanaparaLegacy.result.category.slug === 'khanapara-teer', 'Correctly linked to Khanapara Teer slug in database');
+
+    // TEST RESOLUTION OF "cat_shillong_teer"
+    const resShillongLegacy = await recordAdminResult({
+      categoryId: 'cat_shillong_teer',
+      dateStr: '2026-11-18',
+      round1: '45',
+      round2: '55',
+      action: 'submit',
+      user: adminUser,
+    }, prisma);
+    assert(resShillongLegacy.success === true, 'Resolves "cat_shillong_teer" successfully');
+
+    // TEST RESOLUTION OF "cat_juwai_teer"
+    const resJuwaiLegacy = await recordAdminResult({
+      categoryId: 'cat_juwai_teer',
+      dateStr: '2026-11-18',
+      round1: '12',
+      round2: '34',
+      action: 'submit',
+      user: adminUser,
+    }, prisma);
+    assert(resJuwaiLegacy.success === true, 'Resolves "cat_juwai_teer" successfully');
+
+    // TEST RESOLUTION OF "cat_shillong_night_teer"
+    const resNightLegacy = await recordAdminResult({
+      categoryId: 'cat_shillong_night_teer',
+      dateStr: '2026-11-18',
+      round1: '78',
+      round2: '90',
+      action: 'submit',
+      user: adminUser,
+    }, prisma);
+    assert(resNightLegacy.success === true, 'Resolves "cat_shillong_night_teer" successfully');
 
     // Category resolution by ID
     const juwaiCat = await prisma.gameCategory.findUnique({ where: { slug: 'juwai-teer' } });
@@ -185,7 +230,7 @@ async function runTests() {
     assert(typeof fetched.round2 === 'string', 'Round 2 stored as String, not Number');
   }
 
-  // TEST 5: Verification Workflows & Evidence URL Validation
+  // TEST 5: Verification Workflows & Evidence URL Validation across all categories
   console.log('\nTest Suite 5: Verification Mode & Evidence Provenance');
   {
     const verifyDate = '2026-11-20';

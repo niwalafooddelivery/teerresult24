@@ -6,7 +6,7 @@
 
 import prisma from './prisma.js';
 import { validateTeerNumber, getTodayISTDateStr, isValidCalendarDate } from './date-utils.js';
-import { ensureOfficialCategories } from './categories.js';
+import { ensureOfficialCategories, resolveCanonicalCategorySlug } from './categories.js';
 
 /**
  * Validates that an evidence URL is a syntactically valid HTTP/HTTPS URL.
@@ -110,12 +110,13 @@ export async function recordAdminResult(params, db = prisma) {
   }
 
   // Dynamic Category Resolution:
-  // Resolves category whether categoryId is a database CUID, fixed ID, slug, or human name
-  const candidateSlug = cleanCatInput.toLowerCase().replace(/\s+/g, '-');
+  // Resolves category whether categoryId is a canonical slug, legacy identifier (e.g. cat_khanapara_teer), database CUID, or human name
+  const canonicalSlug = resolveCanonicalCategorySlug(cleanCatInput);
   const whereOr = [
+    { slug: canonicalSlug },
     { id: cleanCatInput },
+    { id: canonicalSlug },
     { slug: cleanCatInput },
-    { slug: candidateSlug },
     { name: cleanCatInput },
   ];
 
