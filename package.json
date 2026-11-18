@@ -11,6 +11,7 @@
     "postinstall": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
+    "db:safe-migrate": "node scripts/safe-migrate-and-seed.cjs",
     "test": "node test-automation-v10.cjs && prisma generate"
   },
   "dependencies": {
