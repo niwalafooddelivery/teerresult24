@@ -3,20 +3,29 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execSync } = require('node:child_process');
 
-// Enforce test database URL before importing PrismaClient or app modules
+// Determine whether testing against PostgreSQL (via process.env.DATABASE_URL) or disposable SQLite
+const isPostgres = Boolean(process.env.DATABASE_URL && (process.env.DATABASE_URL.startsWith('postgres://') || process.env.DATABASE_URL.startsWith('postgresql://')));
 const TEST_DB_PATH = path.join(__dirname, 'test.db');
-const TEST_DB_URL = `file:${TEST_DB_PATH}`;
+const TEST_DB_URL = isPostgres ? process.env.DATABASE_URL : `file:${TEST_DB_PATH}`;
 process.env.DATABASE_URL = TEST_DB_URL;
 
-console.log('Deploying Prisma migrations to disposable test database...');
+console.log(`Setting up test database (${isPostgres ? 'PostgreSQL' : 'Disposable SQLite'})...`);
 try {
-  execSync('npx prisma migrate deploy', {
-    env: { ...process.env, DATABASE_URL: TEST_DB_URL },
-    stdio: 'pipe',
-  });
+  if (isPostgres) {
+    execSync('npx prisma migrate deploy --schema=prisma/schema.prisma', {
+      env: { ...process.env, DATABASE_URL: TEST_DB_URL },
+      stdio: 'pipe',
+    });
+  } else {
+    execSync('npx prisma generate --schema=prisma-sqlite/schema.prisma', { stdio: 'pipe' });
+    execSync('npx prisma migrate deploy --schema=prisma-sqlite/schema.prisma', {
+      env: { ...process.env, DATABASE_URL: TEST_DB_URL },
+      stdio: 'pipe',
+    });
+  }
   console.log('✓ Disposable test database initialized and migrations applied.');
 } catch (err) {
-  console.error('Failed to run migrations on test.db:', err.message);
+  console.error('Failed to run migrations on test db:', err.message);
   process.exit(1);
 }
 
@@ -314,12 +323,23 @@ async function runAllTests() {
     });
     assert(resStructured.valid === true, 'Production validator accepts structured official evidence with recognized authority and bulletin ref');
 
-    // 3.6 Acceptance: delimited text string format
+    // 3.6 Rejection: manually typed bulletin references or arbitrary strings rejected for independent official verification
     const resDelimited = await validateOfficialGroundEvidence({
       confirmedByEditor: true,
       editorialEvidence: 'Authority: Polo Ground Archery Association | Ref: Counter Slip #104 | Notes: Signed by steward',
     });
-    assert(resDelimited.valid === true, 'Production validator accepts formatted string with recognized authority and counter slip');
+    assert(resDelimited.valid === false, 'Production validator rejects manually typed text strings for independent official verification (requires structured ground evidence or SourceRecord)');
+
+    // 3.7 Acceptance: structured official evidence with recognized authority and counter slip
+    const resCounterSlip = await validateOfficialGroundEvidence({
+      confirmedByEditor: true,
+      officialEvidence: {
+        sourceAuthority: 'Polo Ground Archery Association',
+        evidenceIdentifier: 'Counter Slip #104',
+        editorialNotes: 'Signed by ground steward',
+      },
+    });
+    assert(resCounterSlip.valid === true, 'Production validator accepts structured official evidence with recognized authority and counter slip');
 
     // -------------------------------------------------------------
     // Test Group 4: Tri-State Verification Distinction (Requirement 3)
@@ -552,71 +572,100 @@ async function runAllTests() {
     assert(raceConflictCount === 1, 'CONCURRENCY SAFEGUARD: Competing request receives CONCURRENT_REVIEW_CONFLICT');
 
     // -------------------------------------------------------------
-    // Test Group 9: Real Scraper Validation Against Live Source
+    // PART A - TEST GROUP 9: Deterministic Parser & Score Sanitizer Fixtures
     // -------------------------------------------------------------
-    console.log('\n--- TEST GROUP 9: Real Scraper Validation Against Live Source ---');
-    try {
-      // 9.1 Live connection and inspection of authorized source (teerresultlive.in)
-      const liveRes = await fetchTeerResultLiveResults();
-      assert(liveRes.success === true, 'Live scraper connects and extracts successfully from https://teerresultlive.in/ for current IST date');
-      assert(liveRes.results.length === 4, 'Extracted all four competition games from live payload');
+    console.log('\n--- PART A - TEST GROUP 9: Deterministic Parser & Score Sanitizer Fixtures ---');
+    const fixtureTargetDate = '2028-06-15';
 
-      // 9.1b Confirm that the scraper expected TeerLiveBoard structure exists in actual source response
+    // 9.1 Deterministic strict score sanitization
+    assert(sanitizeScoreStrict('xx') === null, 'Score Sanitizer: Pre-round placeholder "xx" safely sanitized to null');
+    assert(sanitizeScoreStrict('XX') === null, 'Score Sanitizer: Pre-round placeholder "XX" safely sanitized to null');
+    assert(sanitizeScoreStrict('--') === null, 'Score Sanitizer: Pre-round placeholder "--" safely sanitized to null');
+    assert(sanitizeScoreStrict('?') === null, 'Score Sanitizer: Pre-round placeholder "?" safely sanitized to null');
+    assert(sanitizeScoreStrict('7') === '07', 'Score Sanitizer: Single digit score padded with leading zero ("7" -> "07")');
+    assert(sanitizeScoreStrict('42') === '42', 'Score Sanitizer: Valid two digit score preserved ("42")');
+    assert(sanitizeScoreStrict('00') === '00', 'Score Sanitizer: Double zero score preserved ("00")');
+    assert(sanitizeScoreStrict('105') === null, 'Score Sanitizer: Out-of-bounds score sanitized to null');
+
+    // 9.2 Declared scores extraction verification from deterministic fixture
+    const declaredHtml = makeAstroIslandHtml(fixtureTargetDate, {
+      shillong: { fr: '82', sr: '12', status: 'DECLARED' },
+      khanapara: { fr: '23', sr: '26', status: 'DECLARED' },
+      juwai: { fr: '37', sr: '10', status: 'DECLARED' },
+      night: { fr: '78', sr: '96', status: 'DECLARED' },
+    });
+    const declaredRes = await fetchTeerResultLiveResults({ htmlOverride: declaredHtml, targetDate: fixtureTargetDate });
+    assert(declaredRes.success === true, 'Declared scores extracted successfully from Astro TeerLiveBoard payload');
+
+    const decShillong = declaredRes.results.find((g) => g.gameIdentifier === 'shillong-teer');
+    const decKhanapara = declaredRes.results.find((g) => g.gameIdentifier === 'khanapara-teer');
+    const decJuwai = declaredRes.results.find((g) => g.gameIdentifier === 'juwai-teer');
+    const decNight = declaredRes.results.find((g) => g.gameIdentifier === 'shillong-night-teer');
+
+    assert(decShillong && decShillong.round1 === '82' && decShillong.round2 === '12', 'Shillong Teer: Exact match (FR: 82, SR: 12)');
+    assert(decKhanapara && decKhanapara.round1 === '23' && decKhanapara.round2 === '26', 'Khanapara Teer: Exact match (FR: 23, SR: 26)');
+    assert(decJuwai && decJuwai.round1 === '37' && decJuwai.round2 === '10', 'Juwai Teer: Exact match (FR: 37, SR: 10)');
+    assert(decNight && decNight.round1 === '78' && decNight.round2 === '96', 'Shillong Night Teer: Exact match (FR: 78, SR: 96)');
+
+    // 9.3 Standalone extractResultsFromHtml parser verification
+    const standaloneParsed = extractResultsFromHtml(declaredHtml, fixtureTargetDate);
+    assert(standaloneParsed.success === true && standaloneParsed.results.length === 4, 'Standalone extractResultsFromHtml parses 4 games successfully');
+
+    // 9.4 Strict calendar date mismatch guard on deterministic fixture
+    const fixtureMismatchRes = extractResultsFromHtml(declaredHtml, '2028-06-16');
+    assert(fixtureMismatchRes.isDateMismatch === true, 'Date mismatch guard triggers correctly when source date (2028-06-15) does not match expected target date (2028-06-16)');
+
+    // 9.5 Layout mismatch safeguard (malformed HTML without Astro island)
+    const badHtml = '<html><body><div><h1>Teer Results</h1><p>Numbers: 55 and 66</p></div></body></html>';
+    const badParsed = extractResultsFromHtml(badHtml, fixtureTargetDate);
+    assert(badParsed.success === false && badParsed.results.length === 0, 'SAFEGUARD: extractResultsFromHtml safely fails on layout mismatch with empty results');
+
+    const badRes = await fetchTeerResultLiveResults({ htmlOverride: badHtml, targetDate: fixtureTargetDate });
+    assert(badRes.success === false && badRes.results.length === 0, 'SAFEGUARD: fetchTeerResultLiveResults safely fails on layout mismatch with empty results');
+
+    // -------------------------------------------------------------
+    // PART B - LIVE SOURCE INTEGRATION TESTS (teerresultlive.in)
+    // -------------------------------------------------------------
+    console.log('\n--- PART B: Live Source Integration Tests (teerresultlive.in) ---');
+    try {
+      // B.1 Live connection and inspection of authorized source (teerresultlive.in)
       const liveHtmlRes = await fetch('https://teerresultlive.in/', {
         headers: { 'User-Agent': 'TeerResult2-SyncBot/1.0 (+https://teerresult2.com)' },
         signal: AbortSignal.timeout(10000),
       });
+      assert(liveHtmlRes.status === 200, 'LIVE SOURCE PROOF: HTTP 200 response from https://teerresultlive.in/');
+
       const liveHtmlText = await liveHtmlRes.text();
       const containsTeerLiveBoard = /astro-island[^>]*component-url="[^"]*TeerLiveBoard[^"]*"/i.test(liveHtmlText);
-      assert(containsTeerLiveBoard === true, 'LIVE SOURCE PROOF: Actual HTML response from https://teerresultlive.in/ contains TeerLiveBoard Astro island');
+      assert(containsTeerLiveBoard === true, 'LIVE SOURCE PROOF: Actual HTML response contains TeerLiveBoard Astro island');
+
+      // B.2 Live extraction against current Asia/Kolkata date
+      const liveRes = await fetchTeerResultLiveResults();
+      assert(liveRes.success === true, 'Live scraper connects and extracts successfully for current Asia/Kolkata date');
+      assert(liveRes.results.length === 4, 'Extracted all four competition games from live payload');
 
       const liveShillong = liveRes.results.find((g) => g.gameIdentifier === 'shillong-teer');
       const liveKhanapara = liveRes.results.find((g) => g.gameIdentifier === 'khanapara-teer');
       const liveJuwai = liveRes.results.find((g) => g.gameIdentifier === 'juwai-teer');
       const liveNight = liveRes.results.find((g) => g.gameIdentifier === 'shillong-night-teer');
 
-      assert(liveShillong && liveKhanapara && liveJuwai && liveNight, 'All four authorized games found in live feed');
-      // Before afternoon round times (e.g., 2:00 PM IST), games have placeholder 'xx'
-      assert(liveShillong.round1 === null, 'Pre-round placeholder "xx" safely sanitized to null (no guessing)');
+      assert(Boolean(liveShillong && liveKhanapara && liveJuwai && liveNight), 'All four authorized games found in live feed');
 
-      // 9.2 Strict calendar date mismatch guard
-      const mismatchRes = await fetchTeerResultLiveResults({ targetDate: '2026-11-15' });
-      assert(mismatchRes.isDateMismatch === true, 'Date mismatch guard triggers correctly when source date does not match expected target date');
+      // Schema, structure and score format validation (NO fixed time or score assumptions)
+      const isValidScoreOrNull = (val) => val === null || /^\d{2}$/.test(val);
+      for (const game of liveRes.results) {
+        assert(isValidScoreOrNull(game.round1), `${game.gameName}: FR is either null (pending) or valid 2-digit score (value: ${game.round1 ?? 'null'})`);
+        assert(isValidScoreOrNull(game.round2), `${game.gameName}: SR is either null (pending) or valid 2-digit score (value: ${game.round2 ?? 'null'})`);
+        assert(game.sourceVerificationState === 'PENDING_VERIFICATION', `${game.gameName}: sourceVerificationState is PENDING_VERIFICATION`);
+        assert(game.dateStr === getTodayISTDateStr(), `${game.gameName}: source date matches current Asia/Kolkata calendar date (${game.dateStr})`);
+      }
 
-      // 9.3 Declared scores extraction verification
-      const declaredHtml = makeAstroIslandHtml('2026-11-16', {
-        shillong: { fr: '82', sr: '12', status: 'DECLARED' },
-        khanapara: { fr: '23', sr: '26', status: 'DECLARED' },
-        juwai: { fr: '37', sr: '10', status: 'DECLARED' },
-        night: { fr: '78', sr: '96', status: 'DECLARED' },
-      });
-      const declaredRes = await fetchTeerResultLiveResults({ htmlOverride: declaredHtml, targetDate: '2026-11-16' });
-      assert(declaredRes.success === true, 'Declared scores extracted successfully from Astro TeerLiveBoard payload');
-
-      const decShillong = declaredRes.results.find((g) => g.gameIdentifier === 'shillong-teer');
-      const decKhanapara = declaredRes.results.find((g) => g.gameIdentifier === 'khanapara-teer');
-      const decJuwai = declaredRes.results.find((g) => g.gameIdentifier === 'juwai-teer');
-      const decNight = declaredRes.results.find((g) => g.gameIdentifier === 'shillong-night-teer');
-
-      assert(decShillong && decShillong.round1 === '82' && decShillong.round2 === '12', 'Shillong Teer: Exact match (FR: 82, SR: 12)');
-      assert(decKhanapara && decKhanapara.round1 === '23' && decKhanapara.round2 === '26', 'Khanapara Teer: Exact match (FR: 23, SR: 26)');
-      assert(decJuwai && decJuwai.round1 === '37' && decJuwai.round2 === '10', 'Juwai Teer: Exact match (FR: 37, SR: 10)');
-      assert(decNight && decNight.round1 === '78' && decNight.round2 === '96', 'Shillong Night Teer: Exact match (FR: 78, SR: 96)');
-
-      // 9.4 extractResultsFromHtml standalone parser verification
-      const standaloneParsed = extractResultsFromHtml(declaredHtml, '2026-11-16');
-      assert(standaloneParsed.success === true && standaloneParsed.results.length === 4, 'Standalone extractResultsFromHtml parses 4 games successfully');
-
-      // 9.5 Layout mismatch safeguard (malformed HTML without Astro island)
-      const badHtml = '<html><body><div><h1>Teer Results</h1><p>Numbers: 55 and 66</p></div></body></html>';
-      const badParsed = extractResultsFromHtml(badHtml, '2026-11-16');
-      assert(badParsed.success === false && badParsed.results.length === 0, 'SAFEGUARD: extractResultsFromHtml safely fails on layout mismatch with empty results');
-
-      const badRes = await fetchTeerResultLiveResults({ htmlOverride: badHtml, targetDate: '2026-11-16' });
-      assert(badRes.success === false && badRes.results.length === 0, 'SAFEGUARD: fetchTeerResultLiveResults safely fails on layout mismatch with empty results');
-    } catch (e) {
-      console.error('Scraper test error:', e);
-      failed++;
+      // B.3 Strict calendar date mismatch guard against live endpoint
+      const liveMismatchRes = await fetchTeerResultLiveResults({ targetDate: '2099-01-01' });
+      assert(liveMismatchRes.isDateMismatch === true, 'Date mismatch guard triggers correctly when live source date does not match requested date (2099-01-01)');
+    } catch (liveErr) {
+      console.warn('Note: Live source network test encountered an issue:', liveErr.message);
+      assert(false, `Live source test failed: ${liveErr.message}`);
     }
 
     // -------------------------------------------------------------
@@ -757,7 +806,7 @@ async function runAllTests() {
 
     await prisma.$disconnect();
     // Allow process file handles to release
-    await new Promise((r) => setTimeout(r, 200));
+    await new Promise((r) => setTimeout(r, 600));
 
     // Clean up disposable test database
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -771,7 +820,7 @@ async function runAllTests() {
         if (attempt === 4) {
           console.warn('Note: test.db deferred cleanup warning:', cleanErr.message);
         } else {
-          await new Promise((r) => setTimeout(r, 200));
+          await new Promise((r) => setTimeout(r, 400));
         }
       }
     }
