@@ -1,15 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import TeerLogo from '@/components/TeerLogo';
 
+function getClientTodayIST() {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  } catch {
+    return new Date().toISOString().split('T')[0];
+  }
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
+
+  // Categories & dropdown state
   const [categories, setCategories] = useState([]);
-  const [todayResults, setTodayResults] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
-  const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]);
+
+  // Results & Current Status Summary state
+  const [todayResults, setTodayResults] = useState([]);
+  const [statusDateStr, setStatusDateStr] = useState(getClientTodayIST());
+  const [statusError, setStatusError] = useState('');
+  const [fetching, setFetching] = useState(true);
+
+  // Score Declaration Editor form state
+  const [dateStr, setDateStr] = useState(getClientTodayIST());
   const [round1, setRound1] = useState('');
   const [round2, setRound2] = useState('');
   const [sourceInfo, setSourceInfo] = useState('');
@@ -17,7 +41,6 @@ export default function AdminDashboardPage() {
   const [actionType, setActionType] = useState('submit'); // 'submit' or 'approve_and_verify'
   const [correctionReason, setCorrectionReason] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
   const [message, setMessage] = useState({ text: '', type: '' });
 
   // Reviews Queue state
@@ -25,9 +48,14 @@ export default function AdminDashboardPage() {
   const [reviewActionLoading, setReviewActionLoading] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
 
-  const checkAuthAndLoad = async () => {
+  const checkAuthAndLoad = useCallback(async () => {
     try {
       setFetching(true);
+      setCategoriesLoading(true);
+      setCategoriesError('');
+      setStatusError('');
+
+      // 1. Verify Authentication
       const authRes = await fetch('/api/admin/me');
       const authData = await authRes.json();
       if (!authRes.ok || !authData.authenticated) {
@@ -35,36 +63,75 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      // Load results
-      const res = await fetch('/api/results/today');
-      const data = await res.json();
-      if (data.success) {
-        setTodayResults(data.results);
-        setCategories(data.results.map((r) => ({ id: r.id, name: r.name, slug: r.slug })));
-        if (data.results.length > 0 && !selectedCategoryId) {
-          setSelectedCategoryId(data.results[0].id);
+      // 2. Fetch categories from dedicated endpoint /api/admin/categories
+      let cats = [];
+      try {
+        const catRes = await fetch('/api/admin/categories');
+        const catData = await catRes.json();
+        if (catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
+          cats = catData.categories;
         }
+      } catch (catErr) {
+        console.warn('Failed to fetch from /api/admin/categories:', catErr);
       }
 
-      // Load pending reviews
-      const reviewsRes = await fetch('/api/admin/reviews?status=PENDING');
-      const reviewsData = await reviewsRes.json();
-      if (reviewsData.success) {
-        setPendingReviews(reviewsData.reviews || []);
+      // 3. Load today results
+      try {
+        const res = await fetch('/api/results/today');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.results)) {
+          setTodayResults(data.results);
+          if (data.date) setStatusDateStr(data.date);
+
+          // If /api/admin/categories didn't return, fallback to categories from results
+          if (cats.length === 0 && data.results.length > 0) {
+            cats = data.results.map((r) => ({
+              id: r.id,
+              name: r.name,
+              slug: r.slug,
+              round1Time: r.round1Time,
+              round2Time: r.round2Time,
+            }));
+          }
+        } else {
+          setStatusError(data.error || 'Unable to load today status summary');
+        }
+      } catch (todayErr) {
+        console.error('Failed to load today results:', todayErr);
+        setStatusError(todayErr.message || 'Network error fetching status');
+      }
+
+      setCategories(cats);
+      if (cats.length > 0) {
+        setSelectedCategoryId((prev) => (prev && cats.some((c) => c.id === prev) ? prev : cats[0].id));
+      } else {
+        setCategoriesError('No competition categories found in database.');
+      }
+
+      // 4. Load pending reviews
+      try {
+        const reviewsRes = await fetch('/api/admin/reviews?status=PENDING');
+        const reviewsData = await reviewsRes.json();
+        if (reviewsData.success) {
+          setPendingReviews(reviewsData.reviews || []);
+        }
+      } catch (revErr) {
+        console.warn('Failed to load pending reviews:', revErr);
       }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
       router.push('/admin/login');
     } finally {
       setFetching(false);
+      setCategoriesLoading(false);
     }
-  };
+  }, [router]);
 
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/logout', { method: 'POST' });
       router.push('/admin/login');
-    } catch (err) {
+    } catch {
       router.push('/admin/login');
     }
   };
@@ -73,7 +140,7 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     checkAuthAndLoad();
-  }, []);
+  }, [checkAuthAndLoad]);
 
   const handleSelectGame = (catId) => {
     setSelectedCategoryId(catId);
@@ -94,6 +161,12 @@ export default function AdminDashboardPage() {
   const handlePublish = async (e) => {
     e.preventDefault();
     setMessage({ text: '', type: '' });
+
+    if (!selectedCategoryId) {
+      setMessage({ text: 'Please select a competition category before publishing.', type: 'error' });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -160,7 +233,7 @@ export default function AdminDashboardPage() {
         throw new Error(data.error || data.message || 'Sync failed');
       }
       setMessage({
-        text: `Sync executed: ${data.recordsRead} read, ${data.recordsSaved} processed.`,
+        text: `Sync executed: ${data.recordsRead ?? 0} read, ${data.recordsSaved ?? 0} processed.`,
         type: 'success',
       });
       await loadData();
@@ -274,14 +347,21 @@ export default function AdminDashboardPage() {
                     ) : null}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    Source: {rev.sourceName} | <a href={rev.sourceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>View Evidence</a>
+                    Source: {rev.sourceName} |{' '}
+                    <a href={rev.sourceUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'underline' }}>
+                      View Evidence
+                    </a>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     onClick={() => {
-                      if (window.confirm(`Publish ${rev.category?.name || 'game'} as UNVERIFIED live scores?\n\nThis will publish scores to the public scoreboard with an explicit "Unverified Live Score" label without official ground verification.`)) {
+                      if (
+                        window.confirm(
+                          `Publish ${rev.category?.name || 'game'} as UNVERIFIED live scores?\n\nThis will publish scores to the public scoreboard with an explicit "Unverified Live Score" label without official ground verification.`
+                        )
+                      ) {
                         handleReviewAction(rev.id, 'approve', {
                           publishMode: 'unverified',
                           markVerified: false,
@@ -354,18 +434,37 @@ export default function AdminDashboardPage() {
               <label style={{ display: 'block', fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
                 Select Competition Category
               </label>
-              <select
-                className="search-input"
-                style={{ width: '100%', background: '#fff' }}
-                value={selectedCategoryId}
-                onChange={(e) => handleSelectGame(e.target.value)}
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+
+              {categoriesLoading ? (
+                <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  Loading competition categories...
+                </div>
+              ) : categoriesError ? (
+                <div style={{ padding: '10px 14px', background: '#fef2f2', borderRadius: 'var(--radius-md)', border: '1px solid #fecaca', fontSize: '0.85rem', color: '#b91c1c' }}>
+                  {categoriesError}{' '}
+                  <button type="button" onClick={loadData} style={{ textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', fontWeight: 600 }}>
+                    Retry
+                  </button>
+                </div>
+              ) : categories.length === 0 ? (
+                <div style={{ padding: '10px 14px', background: '#fffbeb', borderRadius: 'var(--radius-md)', border: '1px solid #fde68a', fontSize: '0.85rem', color: '#b45309' }}>
+                  No competition categories available. Please seed categories.
+                </div>
+              ) : (
+                <select
+                  className="search-input"
+                  style={{ width: '100%', background: '#fff' }}
+                  value={selectedCategoryId}
+                  onChange={(e) => handleSelectGame(e.target.value)}
+                  required
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.round1Time && c.round2Time ? `(${c.round1Time} / ${c.round2Time})` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div>
@@ -394,7 +493,10 @@ export default function AdminDashboardPage() {
                   className="search-input"
                   style={{ width: '100%', fontSize: '1.1rem', fontWeight: 700, textAlign: 'center' }}
                   value={round1}
-                  onChange={(e) => setRound1(e.target.value)}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\D/g, '').slice(0, 2);
+                    setRound1(clean);
+                  }}
                 />
               </div>
 
@@ -409,7 +511,10 @@ export default function AdminDashboardPage() {
                   className="search-input"
                   style={{ width: '100%', fontSize: '1.1rem', fontWeight: 700, textAlign: 'center' }}
                   value={round2}
-                  onChange={(e) => setRound2(e.target.value)}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\D/g, '').slice(0, 2);
+                    setRound2(clean);
+                  }}
                 />
               </div>
             </div>
@@ -489,7 +594,7 @@ export default function AdminDashboardPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || categoriesLoading || categories.length === 0}
               className="btn-primary"
               style={{ width: '100%', padding: '12px', marginTop: '10px' }}
             >
@@ -500,49 +605,113 @@ export default function AdminDashboardPage() {
 
         {/* Current Status Overview */}
         <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' }}>
-              Current Status Summary
-            </h2>
-            <button onClick={loadData} className="btn-secondary" style={{ padding: '6px 10px', fontSize: '0.8rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                Current Status Summary
+              </h2>
+              <p style={{ margin: '4px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                {statusDateStr ? `Date: ${statusDateStr} (Asia/Kolkata)` : 'Asia/Kolkata Live Board'}
+              </p>
+            </div>
+            <button
+              onClick={loadData}
+              disabled={fetching}
+              className="btn-secondary"
+              style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+            >
               {fetching ? '...' : 'Refresh'}
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {todayResults.map((r) => (
-              <div
-                key={r.id}
-                onClick={() => handleSelectGame(r.id)}
-                style={{
-                  padding: '12px 14px',
-                  borderRadius: 'var(--radius-md)',
-                  background: selectedCategoryId === r.id ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
-                  border: selectedCategoryId === r.id ? '2px solid var(--emerald-400)' : '1px solid var(--border-color)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>{r.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    FR: {r.round1 || '--'} | SR: {r.round2 || '--'}
-                  </div>
-                </div>
-
-                <div style={{ textAlign: 'right' }}>
-                  <span
-                    className={`card-badge ${r.isVerified ? 'badge-live' : 'badge-done'}`}
-                    style={{ fontSize: '0.72rem', padding: '2px 8px' }}
-                  >
-                    {r.isVerified ? 'Verified' : 'Pending Verification'}
-                  </span>
-                </div>
+          {fetching && todayResults.length === 0 ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              Loading today result statuses...
+            </div>
+          ) : statusError && todayResults.length === 0 ? (
+            <div style={{ padding: '16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 'var(--radius-md)', color: '#b91c1c', fontSize: '0.85rem' }}>
+              Failed to load current status: {statusError}
+              <div style={{ marginTop: '8px' }}>
+                <button type="button" onClick={loadData} className="btn-secondary" style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                  Retry
+                </button>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : todayResults.length === 0 ? (
+            <div style={{ padding: '20px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 'var(--radius-md)', color: '#b45309', fontSize: '0.85rem' }}>
+              No competition records found for today. Use the editor to declare results or click &quot;Trigger Source Check&quot;.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {todayResults.map((r) => {
+                const frDisplay = r.round1 ? `FR: ${r.round1}` : 'FR: Awaiting Result';
+                const srDisplay = r.round2 ? `SR: ${r.round2}` : 'SR: Awaiting Result';
+                const isSelected = selectedCategoryId === r.id;
+
+                let badgeLabel = 'Awaiting Result';
+                let badgeStyle = { background: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1' };
+
+                if (r.isVerified) {
+                  badgeLabel = 'Verified Official';
+                  badgeStyle = { background: '#dcfce7', color: '#15803d', border: '1px solid #86efac' };
+                } else if (r.round1 || r.round2) {
+                  badgeLabel = r.status === 'CORRECTED' ? 'Corrected' : 'Pending Verification';
+                  badgeStyle = { background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' };
+                }
+
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => handleSelectGame(r.id)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: 'var(--radius-md)',
+                      background: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
+                      border: isSelected ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      boxShadow: isSelected ? '0 2px 6px rgba(5, 150, 105, 0.15)' : 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#0f172a' }}>
+                        {r.name}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        {r.round1Time} | {r.round2Time}
+                      </div>
+                      <div style={{ fontSize: '0.82rem', marginTop: '4px', fontWeight: 600 }}>
+                        <span style={{ color: r.round1 ? '#047857' : '#94a3b8' }}>{frDisplay}</span>
+                        {' · '}
+                        <span style={{ color: r.round2 ? '#047857' : '#94a3b8' }}>{srDisplay}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontWeight: 700,
+                          display: 'inline-block',
+                          ...badgeStyle,
+                        }}
+                      >
+                        {badgeLabel}
+                      </span>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                        {isSelected ? '● Selected' : 'Click to edit'}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>

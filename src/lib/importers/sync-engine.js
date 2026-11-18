@@ -5,55 +5,100 @@ import { fetchTeerResultLiveResults } from './teerresultlive-adapter.js';
 const LOCK_KEY = 'AUTOMATION_SYNC_LOCK';
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
+// In-memory fallback lock store for when DB table is not yet migrated or unreachable
+const memoryLockStore = new Map();
+
+function isLockFallbackNeeded(err) {
+  if (!err) return false;
+  const msg = String(err.message || err);
+  const name = String(err.name || '');
+  const code = String(err.code || err.errorCode || '');
+  return (
+    msg.includes('AutomationLock') ||
+    msg.includes('42P01') ||
+    code === 'P2021' ||
+    code === 'P1012' ||
+    name.includes('PrismaClientInitializationError') ||
+    msg.includes('validating datasource') ||
+    msg.includes("Can't reach database server") ||
+    msg.includes('connection')
+  );
+}
+
+function checkMemoryLock(lockId, now, expiresAt) {
+  const current = memoryLockStore.get(LOCK_KEY);
+  if (!current || current.expiresAt <= now) {
+    memoryLockStore.set(LOCK_KEY, { lockedBy: lockId, expiresAt });
+    return { acquired: true };
+  }
+  if (current.lockedBy === lockId) {
+    current.expiresAt = expiresAt;
+    return { acquired: true };
+  }
+  return {
+    acquired: false,
+    message: `Sync execution locked by ${current.lockedBy} until ${current.expiresAt.toISOString()}`,
+  };
+}
+
 /**
  * Acquires an atomic database-backed lock to prevent concurrent sync executions.
  * Prevents race conditions during expired lock takeovers via conditional atomic transactions.
+ * Includes graceful memory-store fallback if AutomationLock table is pending migration.
  */
 export async function acquireAutomationLock(lockId) {
   const now = new Date();
   const expiresAt = new Date(Date.now() + LOCK_TIMEOUT_MS);
 
-  return await prisma.$transaction(async (tx) => {
-    const current = await tx.automationLock.findUnique({
-      where: { key: LOCK_KEY },
-    });
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const current = await tx.automationLock.findUnique({
+        where: { key: LOCK_KEY },
+      });
 
-    if (!current) {
-      try {
-        await tx.automationLock.create({
-          data: { key: LOCK_KEY, lockedBy: lockId, expiresAt },
-        });
-        return { acquired: true };
-      } catch {
-        return { acquired: false, message: 'Concurrent lock acquisition conflict' };
+      if (!current) {
+        try {
+          await tx.automationLock.create({
+            data: { key: LOCK_KEY, lockedBy: lockId, expiresAt },
+          });
+          return { acquired: true };
+        } catch {
+          return { acquired: false, message: 'Concurrent lock acquisition conflict' };
+        }
       }
-    }
 
-    if (current.expiresAt > now) {
-      return {
-        acquired: false,
-        message: `Sync execution locked by ${current.lockedBy} until ${current.expiresAt.toISOString()}`,
-      };
-    }
+      if (current.expiresAt > now) {
+        return {
+          acquired: false,
+          message: `Sync execution locked by ${current.lockedBy} until ${current.expiresAt.toISOString()}`,
+        };
+      }
 
-    // Expired lock: take over atomically ONLY IF expiresAt has not changed in the meantime
-    const takeover = await tx.automationLock.updateMany({
-      where: {
-        key: LOCK_KEY,
-        expiresAt: current.expiresAt,
-      },
-      data: {
-        lockedBy: lockId,
-        expiresAt,
-      },
+      // Expired lock: take over atomically ONLY IF expiresAt has not changed in the meantime
+      const takeover = await tx.automationLock.updateMany({
+        where: {
+          key: LOCK_KEY,
+          expiresAt: current.expiresAt,
+        },
+        data: {
+          lockedBy: lockId,
+          expiresAt,
+        },
+      });
+
+      if (takeover.count === 1) {
+        return { acquired: true };
+      }
+
+      return { acquired: false, message: 'Expired lock was simultaneously acquired by another process' };
     });
-
-    if (takeover.count === 1) {
-      return { acquired: true };
+  } catch (err) {
+    if (isLockFallbackNeeded(err)) {
+      console.warn('[AutomationLock] Database table AutomationLock is not present. Using in-memory lock fallback until migrations are deployed.');
+      return checkMemoryLock(lockId, now, expiresAt);
     }
-
-    return { acquired: false, message: 'Expired lock was simultaneously acquired by another process' };
-  });
+    throw err;
+  }
 }
 
 /**
@@ -63,9 +108,10 @@ export async function acquireAutomationLock(lockId) {
  * An expired or stale worker cannot renew or write results without a valid active lease.
  */
 export async function renewAutomationLock(lockId, extensionMs = LOCK_TIMEOUT_MS) {
+  const now = new Date();
+  const newExpiresAt = new Date(Date.now() + extensionMs);
+
   try {
-    const now = new Date();
-    const newExpiresAt = new Date(Date.now() + extensionMs);
     const renewed = await prisma.automationLock.updateMany({
       where: {
         key: LOCK_KEY,
@@ -78,6 +124,14 @@ export async function renewAutomationLock(lockId, extensionMs = LOCK_TIMEOUT_MS)
     });
     return renewed.count === 1;
   } catch (err) {
+    if (isLockFallbackNeeded(err)) {
+      const current = memoryLockStore.get(LOCK_KEY);
+      if (current && current.lockedBy === lockId && current.expiresAt > now) {
+        current.expiresAt = newExpiresAt;
+        return true;
+      }
+      return false;
+    }
     console.error('Error renewing automation lock lease:', err);
     return false;
   }
@@ -88,8 +142,8 @@ export async function renewAutomationLock(lockId, extensionMs = LOCK_TIMEOUT_MS)
  * Database-level safeguard against stale workers writing results after lease expiration.
  */
 export async function isLockLeaseActive(lockId) {
+  const now = new Date();
   try {
-    const now = new Date();
     const active = await prisma.automationLock.findFirst({
       where: {
         key: LOCK_KEY,
@@ -99,6 +153,10 @@ export async function isLockLeaseActive(lockId) {
     });
     return Boolean(active);
   } catch (err) {
+    if (isLockFallbackNeeded(err)) {
+      const current = memoryLockStore.get(LOCK_KEY);
+      return Boolean(current && current.lockedBy === lockId && current.expiresAt > now);
+    }
     console.error('Error checking active lock lease:', err);
     return false;
   }
@@ -109,6 +167,11 @@ export async function isLockLeaseActive(lockId) {
  * Prevents an overdue job from unsafely deleting a subsequent job's new lock.
  */
 export async function releaseAutomationLock(lockId) {
+  const current = memoryLockStore.get(LOCK_KEY);
+  if (current && current.lockedBy === lockId) {
+    memoryLockStore.delete(LOCK_KEY);
+  }
+
   try {
     const deleted = await prisma.automationLock.deleteMany({
       where: {
@@ -118,6 +181,9 @@ export async function releaseAutomationLock(lockId) {
     });
     return deleted.count > 0;
   } catch (err) {
+    if (isLockFallbackNeeded(err)) {
+      return true;
+    }
     console.error('Error releasing automation lock:', err);
     return false;
   }
@@ -231,9 +297,17 @@ export async function runSyncJob(options = {}) {
         throw new Error(`LOCK_LOST: Lock lease lost or claimed by another worker during processing (${item.gameIdentifier}) for ${lockId}. Aborting immediately.`);
       }
 
-      const category = await prisma.gameCategory.findUnique({
+      let category = await prisma.gameCategory.findUnique({
         where: { slug: item.gameIdentifier },
       });
+
+      if (!category) {
+        const { ensureOfficialCategories } = await import('../categories.js');
+        await ensureOfficialCategories(prisma).catch(() => {});
+        category = await prisma.gameCategory.findUnique({
+          where: { slug: item.gameIdentifier },
+        }).catch(() => null);
+      }
 
       if (!category) {
         console.warn(`Category slug not registered in DB: ${item.gameIdentifier}`);
@@ -248,13 +322,25 @@ export async function runSyncJob(options = {}) {
       await prisma.$transaction(async (tx) => {
         // Database-level safeguard against stale workers:
         // Verify the lease has not expired before proceeding with database writes
-        const activeLock = await tx.automationLock.findFirst({
-          where: {
-            key: LOCK_KEY,
-            lockedBy: lockId,
-            expiresAt: { gt: new Date() },
-          },
-        });
+        let activeLock = null;
+        try {
+          activeLock = await tx.automationLock.findFirst({
+            where: {
+              key: LOCK_KEY,
+              lockedBy: lockId,
+              expiresAt: { gt: new Date() },
+            },
+          });
+        } catch (err) {
+          if (isLockFallbackNeeded(err)) {
+            const mem = memoryLockStore.get(LOCK_KEY);
+            if (mem && mem.lockedBy === lockId && mem.expiresAt > new Date()) {
+              activeLock = mem;
+            }
+          } else {
+            throw err;
+          }
+        }
 
         if (!activeLock) {
           throw new Error(`STALE_WORKER_WRITE_BLOCKED: Lease expired for ${lockId}. Stale worker write safely blocked at database transaction boundary.`);
