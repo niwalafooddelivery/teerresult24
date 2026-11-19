@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const metadata = {
   title: 'Result Verification Protocol - How We Validate Scores | TeerResult',
@@ -7,14 +9,49 @@ export const metadata = {
   alternates: {
     canonical: 'https://teerresult24.com/result-verification/',
   },
+  openGraph: {
+    title: 'Result Verification Protocol - How We Validate Scores | TeerResult',
+    description:
+      'Learn about our three-tier verification standard for transcribing, corroborating, and validating archery scores.',
+    url: 'https://teerresult24.com/result-verification/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'article',
+  },
 };
 
 export default function ResultVerificationPage() {
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'How does TeerResult verify archery results?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'We apply a strict three-tier verification standard: direct ground bulletin corroboration from authorized archery marshals, strict two-digit (00-99) software validation with leading zero preservation, and archival source evidence documentation.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What happens if a field report has not been verified?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Unverified or pending numbers remain strictly isolated from public display until corroborated by official tally sheets, displaying "--" in public scorecards to prevent speculation.',
+        },
+      },
+    ],
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Result Verification</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
+      <Breadcrumb items={[{ label: 'Result Verification' }]} />
 
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">Result Verification Protocol</h1>
@@ -66,6 +103,8 @@ export default function ResultVerificationPage() {
           audit log.
         </p>
       </article>
+
+      <GameQuickLinks />
     </div>
   );
 }

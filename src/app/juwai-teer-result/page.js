@@ -1,15 +1,26 @@
 import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate, getDayOfWeekFromDateStr } from '@/lib/date-utils';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Juwai Teer Result Today - FR & SR Live | TeerResult',
+  title: 'Juwai Teer Result Today – Afternoon FR & SR Updates | TeerResult',
   description:
-    'Live Juwai Teer Result Today for First Round (02:05 PM) & Second Round (02:45 PM). Real-time West Jaintia Hills archery outcome announcements and 30-day archive on TeerResult.',
+    'Check Juwai Teer Result Today for First Round (02:00 PM) & Second Round (02:45 PM). Timely West Jaintia Hills archery announcements and past 30-day records on TeerResult.',
   alternates: {
     canonical: 'https://teerresult24.com/juwai-teer-result/',
+  },
+  openGraph: {
+    title: 'Juwai Teer Result Today – Afternoon FR & SR Updates | TeerResult',
+    description:
+      'Verified Juwai Teer Result archery numbers for First Round and Second Round. Early afternoon West Jaintia Hills updates.',
+    url: 'https://teerresult24.com/juwai-teer-result/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
   },
 };
 
@@ -71,17 +82,51 @@ export default async function JuwaiTeerPage() {
     showLiveDot = true;
   }
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What time is the Juwai Teer result declared today?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Juwai Teer First Round (FR) is declared around 02:00 PM to 02:05 PM IST, and the Second Round (SR) is declared around 02:45 PM IST, Monday through Saturday.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Where does Juwai Teer archery take place?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Juwai Teer archery matches are held in Jowai, the district headquarters of West Jaintia Hills in Meghalaya, following indigenous traditional archery rules.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How are Juwai Teer scores determined?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Traditional archers release arrows at target cylinders. After collection, officials count the arrows hitting the target, and the last two digits of the total sum become the official score (00 to 99).',
+        },
+      },
+    ],
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Juwai Teer Result</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
-      {/* Unique Exact H1 for Juwai */}
+      <Breadcrumb items={[{ label: 'Juwai Teer Result Today' }]} />
+
+      {/* Target Keyword H1: Juwai Teer Result Today */}
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
-        <h1 className="hero-title">Juwai Teer Result Today - FR &amp; SR</h1>
+        <h1 className="hero-title">Juwai Teer Result Today</h1>
         <p className="hero-subtitle">
-          Official archery outcomes from Jowai, West Jaintia Hills, Meghalaya. First Round (2:05 PM) &amp; Second Round (2:45 PM IST).
+          Archery outcomes from Jowai, West Jaintia Hills, Meghalaya. First Round (02:00 PM) &amp; Second Round (02:45 PM IST).
         </p>
         <div className="today-date-badge">
           <span>Date: {formatISTDisplayDate(todayStr)} (IST)</span>
@@ -104,7 +149,7 @@ export default async function JuwaiTeerPage() {
         <div className="rounds-row">
           <div className="round-box">
             <div className="round-label">First Round (FR)</div>
-            <div className="round-time">02:05 PM IST</div>
+            <div className="round-time">02:00 PM IST</div>
             <div className="round-score score-accent">
               {todayResult?.round1 ?? '--'}
             </div>
@@ -137,14 +182,14 @@ export default async function JuwaiTeerPage() {
           Juwai Teer Previous 30 Days Records
         </h2>
         <div className="table-responsive">
-          <table className="history-table">
+          <table className="history-table" aria-label="Juwai Teer 30-Day Historical Results">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Day</th>
-                <th>First Round (FR)</th>
-                <th>Second Round (SR)</th>
-                <th>Verification</th>
+                <th scope="col">Date</th>
+                <th scope="col">Day</th>
+                <th scope="col">First Round (FR)</th>
+                <th scope="col">Second Round (SR)</th>
+                <th scope="col">Verification</th>
               </tr>
             </thead>
             <tbody>
@@ -198,15 +243,26 @@ export default async function JuwaiTeerPage() {
           Because Juwai Teer shoots earlier, it is typically the first result released each day:
         </p>
         <ul>
-          <li><strong>First Round (FR):</strong> Shooting commences shortly after 01:30 PM, with official counts declared around <strong>02:05 PM IST</strong>.</li>
+          <li><strong>First Round (FR):</strong> Shooting commences shortly after 01:30 PM, with official counts declared around <strong>02:00 PM IST</strong>.</li>
           <li><strong>Second Round (SR):</strong> The afternoon session concludes around <strong>02:45 PM IST</strong>.</li>
         </ul>
 
-        <h3>Official Guidelines</h3>
+        <h3>Official Guidelines &amp; Arrow Counting</h3>
         <p>
-          Like all recognized Teer events in Meghalaya, shooting is conducted under state community permits. Results are calculated strictly by counting arrows hitting the target, taking the last two digits.
+          Like all recognized Teer events in Meghalaya, shooting is conducted under customary community regulations. Results are calculated strictly by counting arrows hitting the cylindrical target: if 847 arrows hit the target in the first round, the last two digits &quot;47&quot; become the official winning number.
+        </p>
+
+        <h3>Related Meghalaya Teer Matches</h3>
+        <p>
+          Participants following Juwai Teer often monitor afternoon and evening rounds across the region. Check today&apos;s companion results for{' '}
+          <Link href="/shillong-teer-result/">Shillong Teer Result Today</Link>,{' '}
+          <Link href="/khanapara-teer-result/">Khanapara Teer Result</Link>, and the late night session at{' '}
+          <Link href="/shillong-night-teer/">Shillong Night Teer Result</Link>. You can also review comprehensive archives on our{' '}
+          <Link href="/previous-results/">Teer Previous Results</Link> page.
         </p>
       </article>
+
+      <GameQuickLinks currentSlug="juwai-teer" />
     </div>
   );
 }

@@ -2,7 +2,7 @@ export default function sitemap() {
   const baseUrl = 'https://teerresult24.com';
 
   const routes = [
-    { path: '', priority: 1.0, changeFrequency: 'always' },
+    { path: '/', priority: 1.0, changeFrequency: 'always' },
     { path: '/shillong-teer-result/', priority: 0.9, changeFrequency: 'hourly' },
     { path: '/khanapara-teer-result/', priority: 0.9, changeFrequency: 'hourly' },
     { path: '/juwai-teer-result/', priority: 0.9, changeFrequency: 'hourly' },

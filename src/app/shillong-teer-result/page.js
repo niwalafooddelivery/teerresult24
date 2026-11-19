@@ -1,15 +1,26 @@
 import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate, getDayOfWeekFromDateStr } from '@/lib/date-utils';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Shillong Teer Result Today - FR & SR Live | TeerResult',
+  title: 'Shillong Teer Result Today – FR & SR Live Updates | TeerResult',
   description:
-    'Live Shillong Teer Result Today for First Round (03:45 PM) & Second Round (04:45 PM). Real-time verified archery numbers, KHASA Polo Ground updates, and 30-day past history on TeerResult.',
+    'Check Shillong Teer Result Today for First Round (03:45 PM) & Second Round (04:45 PM). Timely archery numbers, Polo Ground announcements, and past 30-day archive on TeerResult.',
   alternates: {
     canonical: 'https://teerresult24.com/shillong-teer-result/',
+  },
+  openGraph: {
+    title: 'Shillong Teer Result Today – FR & SR Live Updates | TeerResult',
+    description:
+      'Timely verified Shillong Teer Result Today numbers from Polo Grounds Shillong. First Round & Second Round archival records.',
+    url: 'https://teerresult24.com/shillong-teer-result/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
   },
 };
 
@@ -71,17 +82,59 @@ export default async function ShillongTeerPage() {
     showLiveDot = true;
   }
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What time is the Shillong Teer result declared today?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'The First Round (FR) is declared at 03:45 PM IST and the Second Round (SR) is declared at 04:45 PM IST, Monday through Saturday.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Where does the official Shillong Teer counting take place?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'All arrows are shot, inspected, and counted openly at Polo Grounds in Shillong under the supervision of Khasi Hills Archery Sports Association (KHASA) marshals.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How are Shillong Teer numbers calculated?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Fifty archers shoot cane arrows at a target. Target marshals bundle the valid arrows into groups of ten. The last two digits of the total arrow count constitute the winning score (00 to 99).',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Are Shillong Teer matches played on Sundays?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'No. Traditional archery matches are held six days a week from Monday to Saturday. Sunday is an official rest day with no games scheduled.',
+        },
+      },
+    ],
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Shillong Teer Result</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
-      {/* Unique Exact H1 for Shillong */}
+      <Breadcrumb items={[{ label: 'Shillong Teer Result Today' }]} />
+
+      {/* Target Keyword H1: Shillong Teer Result Today */}
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
-        <h1 className="hero-title">Shillong Teer Result Today - FR &amp; SR</h1>
+        <h1 className="hero-title">Shillong Teer Result Today</h1>
         <p className="hero-subtitle">
-          Official Khasi Hills Archery Sports Association (KHASA) daily first round and second round scores from Polo Ground, Shillong.
+          Khasi Hills Archery Sports Association (KHASA) daily first round (03:45 PM) and second round (04:45 PM) outcomes from Polo Grounds, Shillong.
         </p>
         <div className="today-date-badge">
           <span>Date: {formatISTDisplayDate(todayStr)} (IST)</span>
@@ -235,6 +288,9 @@ export default async function ShillongTeerPage() {
           </div>
         </div>
       </article>
+
+      {/* Contextual Navigation to Other Competitions & Archive */}
+      <GameQuickLinks currentSlug="shillong-teer" />
     </div>
   );
 }

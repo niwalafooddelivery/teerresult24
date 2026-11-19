@@ -1,15 +1,26 @@
 import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate, getDayOfWeekFromDateStr } from '@/lib/date-utils';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Khanapara Teer Result Today - FR & SR Live | TeerResult',
+  title: 'Khanapara Teer Result – Today\'s FR & SR Outcomes | TeerResult',
   description:
-    'Live Khanapara Teer Result Today for First Round (04:10 PM) & Second Round (04:45 PM). Official Assam border archery outcomes, timely updates, and 30-day past history on TeerResult.',
+    'Check Khanapara Teer Result today for First Round (04:10 PM) & Second Round (04:45 PM). Timely Assam-Meghalaya border archery numbers and past 30-day records on TeerResult.',
   alternates: {
     canonical: 'https://teerresult24.com/khanapara-teer-result/',
+  },
+  openGraph: {
+    title: 'Khanapara Teer Result – Today\'s FR & SR Outcomes | TeerResult',
+    description:
+      'Verified Khanapara Teer Result archery numbers for First Round and Second Round. Timely Assam border ground updates.',
+    url: 'https://teerresult24.com/khanapara-teer-result/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
   },
 };
 
@@ -71,17 +82,51 @@ export default async function KhanaparaTeerPage() {
     showLiveDot = true;
   }
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What time is the Khanapara Teer result declared?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Khanapara First Round (FR) is declared at approximately 04:10 PM IST and the Second Round (SR) is declared at 04:45 PM IST, Monday through Saturday.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Are Khanapara Teer and Assam Teer the same competition?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. Because the Khanapara archery grounds lie on the border of Ri-Bhoi district (Meghalaya) and Kamrup Metropolitan (Guwahati, Assam), participants often refer to it as Assam Teer or Khanapara Teer.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How are Khanapara archery scores verified?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Scores are verified directly against ground tally bulletins where arrows are collected and grouped into bundles of ten. The final two digits form the official number.',
+        },
+      },
+    ],
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Khanapara Teer Result</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
-      {/* Unique Exact H1 for Khanapara */}
+      <Breadcrumb items={[{ label: 'Khanapara Teer Result' }]} />
+
+      {/* Target Keyword H1: Khanapara Teer Result */}
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
-        <h1 className="hero-title">Khanapara Teer Result Today - FR &amp; SR</h1>
+        <h1 className="hero-title">Khanapara Teer Result</h1>
         <p className="hero-subtitle">
-          Daily official archery outcomes from Khanapara, located along the Assam-Meghalaya border. First Round (4:10 PM) &amp; Second Round (4:45 PM IST).
+          Daily archery outcomes from Khanapara, located along the Assam-Meghalaya border. First Round (04:10 PM) &amp; Second Round (04:45 PM IST).
         </p>
         <div className="today-date-badge">
           <span>Date: {formatISTDisplayDate(todayStr)} (IST)</span>
@@ -220,6 +265,9 @@ export default async function KhanaparaTeerPage() {
           </div>
         </div>
       </article>
+
+      {/* Contextual Navigation to Other Competitions & Archive */}
+      <GameQuickLinks currentSlug="khanapara-teer" />
     </div>
   );
 }

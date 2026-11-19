@@ -1,20 +1,28 @@
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
 
 export const metadata = {
-  title: 'Terms and Conditions - User Agreement | TeerResult',
+  title: 'Terms and Conditions – User Agreement | TeerResult',
   description:
     'Terms of service, age restrictions (18+), and informational disclaimer governing the use of the TeerResult website.',
   alternates: {
     canonical: 'https://teerresult24.com/terms-and-conditions/',
+  },
+  openGraph: {
+    title: 'Terms and Conditions – User Agreement | TeerResult',
+    description:
+      'Review terms of service, age restrictions (18+), and informational usage guidelines for TeerResult.',
+    url: 'https://teerresult24.com/terms-and-conditions/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
   },
 };
 
 export default function TermsAndConditionsPage() {
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Terms and Conditions</span>
-      </nav>
+      <Breadcrumb items={[{ label: 'Terms and Conditions' }]} />
 
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">Terms and Conditions</h1>

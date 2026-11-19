@@ -746,3 +746,72 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   Breadcrumb Navigation
+   ========================================================================== */
+.breadcrumb-nav {
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+}
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-muted);
+}
+.breadcrumb-list a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+.breadcrumb-list a:hover {
+  text-decoration: underline;
+}
+.breadcrumb-separator {
+  color: var(--text-dim);
+  user-select: none;
+}
+.breadcrumb-current {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Contextual Game Links & Cross-Navigation
+   ========================================================================== */
+.game-quicklinks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 24px 0;
+}
+.game-quicklink-card {
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--text-main);
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.game-quicklink-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-color);
+}
+.game-quicklink-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--primary-color);
+}
+.game-quicklink-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

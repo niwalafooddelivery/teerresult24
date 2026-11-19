@@ -1,20 +1,49 @@
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const metadata = {
-  title: 'About Us - Independent Archery Information Platform | TeerResult',
+  title: 'About Us – Independent Archery Information Platform | TeerResult',
   description:
     'Learn about TeerResult, our mission to provide transparent, accurate, and prompt traditional Meghalaya archery outcome reporting and historical record keeping.',
   alternates: {
     canonical: 'https://teerresult24.com/about-us/',
   },
+  openGraph: {
+    title: 'About Us – Independent Archery Information Platform | TeerResult',
+    description:
+      'Learn about TeerResult: our mission, editorial standards, and commitment to accurate Meghalaya archery reporting.',
+    url: 'https://teerresult24.com/about-us/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
+  },
 };
 
 export default function AboutUsPage() {
+  const orgSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'TeerResult',
+    url: 'https://teerresult24.com/',
+    logo: 'https://teerresult24.com/icon.svg',
+    description:
+      'Independent archival and informational portal documenting traditional Khasi and Meghalaya archery competitions with strict verification.',
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'Customer Support',
+      url: 'https://teerresult24.com/contact/',
+    },
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>About Us</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+      />
+
+      <Breadcrumb items={[{ label: 'About Us' }]} />
 
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">About TeerResult</h1>
@@ -53,6 +82,8 @@ export default function AboutUsPage() {
           TeerResult is strictly an informational publication. We are not affiliated with, nor do we operate, any betting or lottery counters. We do not accept wagers, offer tips, or sell number guarantees. All information is provided for cultural interest and archival research.
         </p>
       </article>
+
+      <GameQuickLinks />
     </div>
   );
 }

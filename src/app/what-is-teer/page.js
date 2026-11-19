@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const metadata = {
   title: 'What is Teer? Rules, History & Archery Calculation Guide | TeerResult',
@@ -7,14 +9,57 @@ export const metadata = {
   alternates: {
     canonical: 'https://teerresult24.com/what-is-teer/',
   },
+  openGraph: {
+    title: 'What is Teer? Rules, History & Archery Calculation Guide | TeerResult',
+    description:
+      'Learn about Meghalaya traditional archery: regulations, arrow counting process, scoring formula, and daily competition schedule.',
+    url: 'https://teerresult24.com/what-is-teer/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'article',
+  },
 };
 
 export default function WhatIsTeerPage() {
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What is Teer in Meghalaya?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Teer is a traditional archery sport regulated under the Meghalaya Amusements and Betting Tax (Amendment) Act 1982, organized by the Khasi Hills Archery Sports Association (KHASA) in Shillong.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How is the winning Teer number calculated?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Archers shoot at a target cylinder. Officials pull and count all hitting arrows. The last two digits of the total count determine the winning score (e.g. 742 arrows = 42; 809 arrows = 09).',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What days are Teer matches conducted?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Sanctioned Teer archery matches take place Monday through Saturday. Matches are suspended on Sundays and state public holidays.',
+        },
+      },
+    ],
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>What is Teer</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
+      <Breadcrumb items={[{ label: 'What is Teer' }]} />
 
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">What is Teer? Rules, History &amp; Scoring Explained</h1>
@@ -42,8 +87,8 @@ export default function WhatIsTeerPage() {
           The competition is split into two distinct rounds:
         </p>
         <ul style={{ paddingLeft: '24px', marginBottom: '16px' }}>
-          <li><strong>First Round (FR):</strong> Fifty archers shoot 30 arrows each within 5 minutes. The round takes place at 03:45 PM IST.</li>
-          <li><strong>Second Round (SR):</strong> The concluding round allows 20 arrows each within 3 minutes at 04:45 PM IST.</li>
+          <li><strong>First Round (FR):</strong> Fifty archers shoot 30 arrows each within 5 minutes. The round takes place around 03:45 PM IST.</li>
+          <li><strong>Second Round (SR):</strong> The concluding round allows 20 arrows each within 3 minutes around 04:30 PM to 04:45 PM IST.</li>
         </ul>
 
         <h2>How the Declared Score is Determined</h2>
@@ -60,44 +105,46 @@ export default function WhatIsTeerPage() {
 
         <h2>Key Announcement Timings</h2>
         <div className="table-responsive">
-          <table className="history-table" style={{ margin: '20px 0' }}>
+          <table className="history-table" style={{ margin: '20px 0' }} aria-label="Key Teer Archery Match Timings">
             <thead>
               <tr>
-                <th>Game Name</th>
-                <th>Location</th>
-                <th>1st Round Time (FR)</th>
-                <th>2nd Round Time (SR)</th>
+                <th scope="col">Game Name</th>
+                <th scope="col">Location</th>
+                <th scope="col">1st Round Time (FR)</th>
+                <th scope="col">2nd Round Time (SR)</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>Juwai Teer</strong></td>
+                <td><Link href="/juwai-teer-result/"><strong>Juwai Teer</strong></Link></td>
                 <td>West Jaintia Hills</td>
-                <td>02:05 PM IST</td>
+                <td>02:00 PM IST</td>
                 <td>02:45 PM IST</td>
               </tr>
               <tr>
-                <td><strong>Shillong Teer</strong></td>
+                <td><Link href="/shillong-teer-result/"><strong>Shillong Teer</strong></Link></td>
                 <td>Polo Grounds, Shillong</td>
                 <td>03:45 PM IST</td>
-                <td>04:45 PM IST</td>
+                <td>04:30 PM IST</td>
               </tr>
               <tr>
-                <td><strong>Khanapara Teer</strong></td>
+                <td><Link href="/khanapara-teer-result/"><strong>Khanapara Teer</strong></Link></td>
                 <td>Ri-Bhoi Border</td>
                 <td>04:10 PM IST</td>
                 <td>04:45 PM IST</td>
               </tr>
               <tr>
-                <td><strong>Shillong Night Teer</strong></td>
+                <td><Link href="/shillong-night-teer/"><strong>Shillong Night Teer</strong></Link></td>
                 <td>Shillong (Night Session)</td>
-                <td>10:15 PM IST</td>
-                <td>11:15 PM IST</td>
+                <td>10:30 PM IST</td>
+                <td>11:30 PM IST</td>
               </tr>
             </tbody>
           </table>
         </div>
       </article>
+
+      <GameQuickLinks />
     </div>
   );
 }

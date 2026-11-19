@@ -1,15 +1,26 @@
 import prisma from '@/lib/prisma';
 import { getTodayISTDateStr, formatISTDisplayDate, getDayOfWeekFromDateStr } from '@/lib/date-utils';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const revalidate = 60;
 
 export const metadata = {
-  title: 'Shillong Night Teer Result Today - FR & SR Live | TeerResult',
+  title: "Shillong Night Teer Result – Today's FR & SR Scores | TeerResult",
   description:
-    'Check Shillong Night Teer result live for Round 1 (10:15 PM) and Round 2 (11:15 PM). Verified archery scores, timing, and date-wise past records on TeerResult.',
+    'Check Shillong Night Teer Result for First Round (10:30 PM) and Second Round (11:30 PM). Verified archery scores, timings, and date-wise past records on TeerResult.',
   alternates: {
     canonical: 'https://teerresult24.com/shillong-night-teer/',
+  },
+  openGraph: {
+    title: "Shillong Night Teer Result – Today's FR & SR Scores | TeerResult",
+    description:
+      'Verified nightly archery session results for Shillong Night Teer. First Round (10:30 PM) & Second Round (11:30 PM IST).',
+    url: 'https://teerresult24.com/shillong-night-teer/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
   },
 };
 
@@ -71,17 +82,51 @@ export default async function ShillongNightTeerPage() {
     showLiveDot = true;
   }
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'What time is the Shillong Night Teer result declared?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'The First Round (FR) is declared around 10:30 PM IST, and the Second Round (SR) is declared around 11:30 PM IST, Monday through Saturday.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How does Shillong Night Teer arrow counting work?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Designated archers shoot arrows into a target. Officials count the total arrows hitting the target, and the last two digits of that count form the official score (00 to 99).',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is Shillong Night Teer held every day?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Shillong Night Teer matches take place Monday through Saturday. Matches are traditionally suspended on Sundays and state public holidays.',
+        },
+      },
+    ],
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Shillong Night Teer</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
-      {/* Unique Exact H1 for Shillong Night */}
+      <Breadcrumb items={[{ label: 'Shillong Night Teer Result' }]} />
+
+      {/* Target Keyword H1: Shillong Night Teer Result */}
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
-        <h1 className="hero-title">Shillong Night Teer Result Today</h1>
+        <h1 className="hero-title">Shillong Night Teer Result</h1>
         <p className="hero-subtitle">
-          Verified nightly archery session results: First Round (10:15 PM) &amp; Second Round (11:15 PM IST).
+          Verified nightly archery session results: First Round (10:30 PM) &amp; Second Round (11:30 PM IST).
         </p>
         <div className="today-date-badge">
           <span>Date: {formatISTDisplayDate(todayStr)} (IST)</span>
@@ -104,7 +149,7 @@ export default async function ShillongNightTeerPage() {
         <div className="rounds-row">
           <div className="round-box">
             <div className="round-label">First Round (FR)</div>
-            <div className="round-time">10:15 PM IST</div>
+            <div className="round-time">10:30 PM IST</div>
             <div className="round-score score-accent">
               {todayResult?.round1 ?? '--'}
             </div>
@@ -115,7 +160,7 @@ export default async function ShillongNightTeerPage() {
 
           <div className="round-box">
             <div className="round-label">Second Round (SR)</div>
-            <div className="round-time">11:15 PM IST</div>
+            <div className="round-time">11:30 PM IST</div>
             <div className="round-score">
               {todayResult?.round2 ?? '--'}
             </div>
@@ -137,14 +182,14 @@ export default async function ShillongNightTeerPage() {
           Shillong Night Teer Previous 30 Days Records
         </h2>
         <div className="table-responsive">
-          <table className="history-table">
+          <table className="history-table" aria-label="Shillong Night Teer 30-Day Historical Results">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Day</th>
-                <th>First Round (FR)</th>
-                <th>Second Round (SR)</th>
-                <th>Verification</th>
+                <th scope="col">Date</th>
+                <th scope="col">Day</th>
+                <th scope="col">First Round (FR)</th>
+                <th scope="col">Second Round (SR)</th>
+                <th scope="col">Verification</th>
               </tr>
             </thead>
             <tbody>
@@ -189,12 +234,12 @@ export default async function ShillongNightTeerPage() {
       <article className="seo-article">
         <h2>Understanding the Shillong Night Teer Session</h2>
         <p>
-          Shillong Night Teer is an evening archery session organized under traditional community guidelines in Meghalaya. While standard daytime Teer matches take place during afternoon hours between 3:45 PM and 4:45 PM IST, the night session caters to enthusiasts following late archery sessions, declaring First Round results at 10:15 PM IST and Second Round results at 11:15 PM IST.
+          Shillong Night Teer is an evening archery session organized under traditional community guidelines in Meghalaya. While standard daytime Teer matches take place during afternoon hours between 3:45 PM and 4:45 PM IST, the night session caters to enthusiasts following late archery sessions, declaring First Round results around 10:30 PM IST and Second Round results around 11:30 PM IST.
         </p>
 
         <h3>How Night Teer Arrow Counting Works</h3>
         <p>
-          Similar to standard Khasi Hills archery traditions, designated archers shoot a set quantity of arrows into a standardized cane target. Target marshals and score clerks extract every arrow that successfully penetrates the target circumference, verify validity, group them into tallies of ten, and count the aggregate total. The final two digits of this total constitute the official declared result number (from 00 to 99).
+          Similar to daytime Khasi Hills archery traditions, designated archers shoot a set quantity of arrows into a standardized cane target. Target marshals and score clerks extract every arrow that successfully penetrates the target circumference, verify validity, group them into tallies of ten, and count the aggregate total. The final two digits of this total constitute the official declared result number (from 00 to 99).
         </p>
         <p>
           For example, if 874 arrows land firmly on target in the first round, the declared FR score is <strong>74</strong>. If 609 arrows hit during the second round, the SR score is <strong>09</strong>. TeerResult always preserves the leading zero to guarantee technical accuracy and eliminate ambiguity.
@@ -202,31 +247,22 @@ export default async function ShillongNightTeerPage() {
 
         <h3>Night Teer Schedule and Timing Guidelines</h3>
         <ul>
-          <li><strong>Round 1 (FR):</strong> Shooting concludes by 10:00 PM IST; official verification and declaration occur at <strong>10:15 PM IST</strong>.</li>
-          <li><strong>Round 2 (SR):</strong> Second quiver is loosed around 11:00 PM IST; official counting concludes at <strong>11:15 PM IST</strong>.</li>
+          <li><strong>Round 1 (FR):</strong> Shooting concludes by 10:15 PM IST; official verification and declaration occur around <strong>10:30 PM IST</strong>.</li>
+          <li><strong>Round 2 (SR):</strong> Second quiver is loosed around 11:15 PM IST; official counting concludes around <strong>11:30 PM IST</strong>.</li>
           <li><strong>Operating Days:</strong> Monday through Saturday. Matches are traditionally suspended on Sundays and local state holidays.</li>
         </ul>
 
-        <h3>Frequently Asked Questions about Shillong Night Teer</h3>
-        <div style={{ display: 'grid', gap: '16px', marginTop: '16px' }}>
-          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-main)' }}>
-              At what time is Shillong Night Teer declared?
-            </h4>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-              The First Round (FR) is declared at 10:15 PM IST, and the Second Round (SR) is declared at 11:15 PM IST.
-            </p>
-          </div>
-          <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-main)' }}>
-              How does TeerResult verify night results?
-            </h4>
-            <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-              We record scores directly from corroborated score bulletins, verifying two-digit integrity (00 to 99) before publishing. If a number is pending, we strictly display <code>--</code> rather than speculative predictions.
-            </p>
-          </div>
-        </div>
+        <h3>Related Meghalaya Teer Competitions</h3>
+        <p>
+          During daytime hours, follow results for{' '}
+          <Link href="/shillong-teer-result/">Shillong Teer Result Today</Link>,{' '}
+          <Link href="/khanapara-teer-result/">Khanapara Teer Result</Link>, and{' '}
+          <Link href="/juwai-teer-result/">Juwai Teer Result Today</Link>. Browse our comprehensive{' '}
+          <Link href="/previous-results/">Teer Previous Results</Link> archive to analyze historical distributions.
+        </p>
       </article>
+
+      <GameQuickLinks currentSlug="shillong-night-teer" />
     </div>
   );
 }

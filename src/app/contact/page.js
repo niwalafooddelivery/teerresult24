@@ -1,20 +1,52 @@
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const metadata = {
-  title: 'Contact Us - Editorial Desk & Discrepancy Reporting | TeerResult',
+  title: 'Contact Us – Editorial Desk & Discrepancy Reporting | TeerResult',
   description:
     'Contact the TeerResult editorial team for data inquiries, correction reports, and factual feedback regarding Meghalaya archery outcome reporting.',
   alternates: {
     canonical: 'https://teerresult24.com/contact/',
   },
+  openGraph: {
+    title: 'Contact Us – Editorial Desk & Discrepancy Reporting | TeerResult',
+    description:
+      'Contact our editorial desk for data verification, discrepancy submissions, and inquiries.',
+    url: 'https://teerresult24.com/contact/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
+  },
 };
 
 export default function ContactPage() {
+  const contactSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    name: 'TeerResult Contact & Editorial Desk',
+    url: 'https://teerresult24.com/contact/',
+    mainEntity: {
+      '@type': 'Organization',
+      name: 'TeerResult',
+      email: 'editorial@teerresult24.com',
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'Editorial & Discrepancies',
+        email: 'editorial@teerresult24.com',
+        availableLanguage: ['English', 'Hindi'],
+      },
+    },
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Contact Us</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(contactSchema) }}
+      />
+
+      <Breadcrumb items={[{ label: 'Contact Us' }]} />
 
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">Contact Editorial Desk</h1>
@@ -51,6 +83,8 @@ export default function ContactPage() {
           page.
         </p>
       </article>
+
+      <GameQuickLinks />
     </div>
   );
 }

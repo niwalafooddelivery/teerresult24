@@ -1,15 +1,26 @@
 import prisma from '@/lib/prisma';
 import PreviousResultsTable from '@/components/PreviousResultsTable';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const revalidate = 120;
 
 export const metadata = {
-  title: 'Teer Previous Results – Date-Wise History | TeerResult',
+  title: 'Teer Previous Results – Date-Wise Archery Archive | TeerResult',
   description:
-    'Search and browse comprehensive past Teer results for Shillong, Khanapara, Juwai, and Night Teer. Filter by game and date with leading zeros preserved on TeerResult.',
+    'Browse Teer Previous Results date-wise for Shillong, Khanapara, Juwai, and Shillong Night. Complete archery archive with verified first round and second round scores.',
   alternates: {
     canonical: 'https://teerresult24.com/previous-results/',
+  },
+  openGraph: {
+    title: 'Teer Previous Results – Date-Wise Archery Archive | TeerResult',
+    description:
+      'Search and browse verified historical Teer results date-wise across all major Meghalaya archery sessions.',
+    url: 'https://teerresult24.com/previous-results/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
   },
 };
 
@@ -71,16 +82,51 @@ export default async function PreviousResultsPage() {
     totalCount = allHistory.length;
   }
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'Where can I find Teer previous results?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'TeerResult maintains a complete date-wise archive of previous Teer results for Shillong, Khanapara, Juwai, and Shillong Night, with First Round (FR) and Second Round (SR) scores preserved with leading zeros.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Are all previous Teer results verified?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes. All historical records are matched against authorized archery club score tally sheets. We never publish speculative or unverified entries.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'How far back does the Teer results archive go?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Our searchable database covers recent months and multi-year historical logs, updated daily following each confirmed match.',
+        },
+      },
+    ],
+  };
+
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Previous Results</span>
-      </nav>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
+      <Breadcrumb items={[{ label: 'Teer Previous Results' }]} />
+
+      {/* Target Keyword H1: Teer Previous Results */}
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
-        <h1 className="hero-title">Teer Previous Results – Date-Wise History</h1>
+        <h1 className="hero-title">Teer Previous Results</h1>
         <p className="hero-subtitle">
-          Verified historical outcomes for Shillong Teer, Khanapara Teer, Juwai Teer, and Shillong Night Teer. Filter by game and date.
+          Verified historical archery outcomes for Shillong Teer, Khanapara Teer, Juwai Teer, and Shillong Night Teer. Filter by game and date.
         </p>
       </section>
 
@@ -101,7 +147,9 @@ export default async function PreviousResultsPage() {
 
         <h3>Why Date-Wise Historical Analysis Matters</h3>
         <p>
-          Enthusiasts and cultural researchers regularly study past date-wise trends to observe arrow grouping distributions and historical outcome frequencies. Having access to a structured archive with First Round (FR) and Second Round (SR) scores enables transparent analysis across seasons and clubs.
+          Enthusiasts and cultural researchers regularly study past date-wise trends to observe arrow grouping distributions and historical outcome frequencies. Having access to a structured archive with First Round (FR) and Second Round (SR) scores enables transparent analysis across seasons and clubs. You can also explore traditional dream interpretations on our{' '}
+          <Link href="/teer-dream-numbers/">Teer Dream Numbers</Link> directory or search multi-year logs in{' '}
+          <Link href="/teer-result-history/">Teer Result History</Link>.
         </p>
 
         <h3>Archive Quality Standards</h3>
@@ -111,6 +159,8 @@ export default async function PreviousResultsPage() {
           <li><strong>Correction Transparency:</strong> In the rare event of an official scoring revision by the archery association, corrections are timestamped and logged in our audit records.</li>
         </ul>
       </article>
+
+      <GameQuickLinks />
     </div>
   );
 }

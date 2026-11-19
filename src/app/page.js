@@ -3,6 +3,7 @@ import { getTodayISTDateStr, getYesterdayISTDateStr, formatISTDisplayDate, forma
 import LiveResults from '@/components/LiveResults';
 import PreviousResultsTable from '@/components/PreviousResultsTable';
 import Link from 'next/link';
+import GameQuickLinks from '@/components/GameQuickLinks';
 
 export const revalidate = 30;
 
@@ -382,6 +383,8 @@ export default async function HomePage() {
         </div>
       </article>
 
+      <GameQuickLinks />
+
       {/* Structured Data (JSON-LD) for Search Engines */}
       <script
         type="application/ld+json"
@@ -397,6 +400,20 @@ export default async function HomePage() {
                 '@type': 'SearchAction',
                 target: 'https://teerresult24.com/previous-results/?date={search_term_string}',
                 'query-input': 'required name=search_term_string',
+              },
+            },
+            {
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'TeerResult',
+              url: 'https://teerresult24.com/',
+              logo: 'https://teerresult24.com/icon.svg',
+              description:
+                'Independent daily archery results, historical archive, and dream numbers portal for Meghalaya Teer competitions.',
+              contactPoint: {
+                '@type': 'ContactPoint',
+                contactType: 'Customer Support',
+                url: 'https://teerresult24.com/contact/',
               },
             },
             {

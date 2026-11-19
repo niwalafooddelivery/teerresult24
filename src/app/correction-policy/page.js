@@ -1,14 +1,24 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
+import Breadcrumb from '@/components/Breadcrumb';
 
 export const revalidate = 300;
 
 export const metadata = {
-  title: 'Correction Policy - Archery Score Audit & Transparency | TeerResult',
+  title: 'Correction Policy – Archery Score Audit & Transparency | TeerResult',
   description:
     'Our transparent policy and public audit log for correcting verified archery records, official recounts, and bulletin discrepancies on TeerResult.',
   alternates: {
     canonical: 'https://teerresult24.com/correction-policy/',
+  },
+  openGraph: {
+    title: 'Correction Policy – Archery Score Audit & Transparency | TeerResult',
+    description:
+      'Learn about our transparent correction policy and public score audit log on TeerResult.',
+    url: 'https://teerresult24.com/correction-policy/',
+    siteName: 'TeerResult',
+    locale: 'en_IN',
+    type: 'website',
   },
 };
 
@@ -46,9 +56,7 @@ export default async function CorrectionPolicyPage() {
 
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
-      <nav style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-        <Link href="/">Home</Link> &gt; <span>Correction Policy</span>
-      </nav>
+      <Breadcrumb items={[{ label: 'Correction Policy' }]} />
 
       <section className="hero-banner" style={{ padding: '16px 0 24px' }}>
         <h1 className="hero-title">Editorial Correction Policy</h1>
@@ -78,15 +86,15 @@ export default async function CorrectionPolicyPage() {
           </p>
         ) : (
           <div className="data-table-container" style={{ margin: '20px 0' }}>
-            <table className="data-table">
+            <table className="data-table" aria-label="Score Corrections Audit Log">
               <thead>
                 <tr>
-                  <th>Date &amp; Time</th>
-                  <th>Game</th>
-                  <th>Round</th>
-                  <th>Original Value</th>
-                  <th>Corrected Value</th>
-                  <th>Reason</th>
+                  <th scope="col">Date &amp; Time</th>
+                  <th scope="col">Game</th>
+                  <th scope="col">Round</th>
+                  <th scope="col">Original Value</th>
+                  <th scope="col">Corrected Value</th>
+                  <th scope="col">Reason</th>
                 </tr>
               </thead>
               <tbody>
