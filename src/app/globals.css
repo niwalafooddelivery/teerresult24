@@ -380,26 +380,92 @@ button {
   color: var(--text-muted);
 }
 
-.status-badge {
+.status-badge,
+.card-badge {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   padding: 3px 8px;
   border-radius: var(--radius-sm);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
 }
 
-.status-badge.live {
+.status-badge.live,
+.card-badge.badge-live {
   background: #ecfdf5;
   color: var(--primary-color);
   border: 1px solid #a7f3d0;
+}
+
+.status-badge.waiting,
+.card-badge.badge-done,
+.card-badge.badge-waiting {
+  background: #f8fafc;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
 }
 
 .status-badge.completed {
   background: #eff6ff;
   color: #2563eb;
   border: 1px solid #bfdbfe;
+}
+
+/* Small green status indicator dot */
+.status-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+}
+
+/* Dedicated Result Card (Individual Game Pages) */
+.result-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 14px;
+}
+
+.rounds-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.round-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.round-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.round-score.score-accent {
+  color: var(--primary-color);
 }
 
 .rounds-container {

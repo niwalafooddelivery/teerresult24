@@ -104,10 +104,11 @@ export default async function HomePage() {
     const res = cat.results.find((r) => r.dateStr === todayStr) || null;
     const isDeclared = Boolean(res?.round1 && res?.round2);
     const isPartial = Boolean(res?.round1 && !res?.round2);
+    const isVerified = Boolean(res?.isVerified);
 
     let statusLabel = 'Awaiting Result';
-    if (isDeclared) statusLabel = 'Declared';
-    else if (isPartial) statusLabel = '1st Round Declared';
+    if (isDeclared && isVerified) statusLabel = 'LIVE';
+    else if (isPartial && isVerified) statusLabel = '1st Round Declared';
     else if (res?.status === 'CANCELLED') statusLabel = 'Cancelled';
 
     return {

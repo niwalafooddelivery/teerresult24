@@ -60,19 +60,24 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
           const isFeatured = item.slug === 'shillong-teer';
           const isDeclared = Boolean(item.round1 && item.round2);
           const isPartial = Boolean(item.round1 && !item.round2);
+          const isVerified = Boolean(item.isVerified);
 
           let badgeClass = 'waiting';
           let statusText = 'Awaiting Result';
+          let showLiveDot = false;
 
-          if (isDeclared) {
-            badgeClass = 'completed';
-            statusText = 'Declared';
-          } else if (isPartial) {
+          if (isDeclared && isVerified) {
+            badgeClass = 'live';
+            statusText = 'LIVE';
+            showLiveDot = true;
+          } else if (isPartial && isVerified) {
             badgeClass = 'live';
             statusText = '1st Round Declared';
+            showLiveDot = true;
           } else if (item.status === 'CANCELLED') {
             badgeClass = 'completed';
             statusText = 'Cancelled';
+            showLiveDot = false;
           }
 
           const gameHref = item.slug === 'shillong-night-teer' ? '/shillong-night-teer/' : `/${item.slug}-result/`;
@@ -90,6 +95,7 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span className={`status-badge ${badgeClass}`}>
+                    {showLiveDot && <span className="status-indicator-dot" aria-hidden="true" />}
                     {statusText}
                   </span>
                 </div>

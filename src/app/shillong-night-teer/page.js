@@ -42,10 +42,20 @@ export default async function ShillongNightTeerPage() {
   const todayResult = category?.results.find((r) => r.dateStr === todayStr);
   const isDeclared = Boolean(todayResult?.round1 && todayResult?.round2);
   const isPartial = Boolean(todayResult?.round1 && !todayResult?.round2);
+  const isVerified = Boolean(todayResult?.isVerified);
 
   let statusLabel = 'Awaiting Result';
-  if (isDeclared) statusLabel = 'Declared';
-  else if (isPartial) statusLabel = '1st Round Declared';
+  let badgeClass = 'badge-done';
+  let showLiveDot = false;
+  if (isDeclared && isVerified) {
+    statusLabel = 'LIVE';
+    badgeClass = 'badge-live';
+    showLiveDot = true;
+  } else if (isPartial && isVerified) {
+    statusLabel = '1st Round Declared';
+    badgeClass = 'badge-live';
+    showLiveDot = true;
+  }
 
   return (
     <div className="container" style={{ padding: '24px 20px 48px' }}>
@@ -71,7 +81,8 @@ export default async function ShillongNightTeerPage() {
             <div className="card-title">Shillong Night Teer</div>
             <div className="card-location">Authorized Archery Grounds (Night Session)</div>
           </div>
-          <span className={`card-badge ${isDeclared ? 'badge-live' : 'badge-done'}`}>
+          <span className={`card-badge ${badgeClass}`}>
+            {showLiveDot && <span className="status-indicator-dot" aria-hidden="true" />}
             {statusLabel}
           </span>
         </div>
@@ -84,7 +95,7 @@ export default async function ShillongNightTeerPage() {
               {todayResult?.round1 ?? '--'}
             </div>
             <div className="round-status">
-              {todayResult?.round1 ? 'Declared' : 'Awaiting Result'}
+              {todayResult?.round1 ? (todayResult.isVerified ? 'Verified Score' : 'Field Declaration') : 'Awaiting Result'}
             </div>
           </div>
 
@@ -95,7 +106,7 @@ export default async function ShillongNightTeerPage() {
               {todayResult?.round2 ?? '--'}
             </div>
             <div className="round-status">
-              {todayResult?.round2 ? 'Declared' : 'Awaiting Result'}
+              {todayResult?.round2 ? (todayResult.isVerified ? 'Verified Score' : 'Field Declaration') : 'Awaiting Result'}
             </div>
           </div>
         </div>

@@ -42,15 +42,19 @@ export default async function KhanaparaTeerPage() {
   const todayResult = category?.results.find((r) => r.dateStr === todayStr);
   const isDeclared = Boolean(todayResult?.round1 && todayResult?.round2);
   const isPartial = Boolean(todayResult?.round1 && !todayResult?.round2);
+  const isVerified = Boolean(todayResult?.isVerified);
 
   let statusLabel = 'Awaiting Result';
   let badgeClass = 'badge-done';
-  if (isDeclared) {
-    statusLabel = todayResult?.isVerified ? 'Verified Bulletin' : 'Declared (Unverified)';
-    badgeClass = todayResult?.isVerified ? 'badge-live' : 'badge-done';
-  } else if (isPartial) {
+  let showLiveDot = false;
+  if (isDeclared && isVerified) {
+    statusLabel = 'LIVE';
+    badgeClass = 'badge-live';
+    showLiveDot = true;
+  } else if (isPartial && isVerified) {
     statusLabel = '1st Round Declared';
     badgeClass = 'badge-live';
+    showLiveDot = true;
   }
 
   return (
@@ -78,6 +82,7 @@ export default async function KhanaparaTeerPage() {
             <div className="card-location">Khanapara, Ri-Bhoi / Guwahati Border</div>
           </div>
           <span className={`card-badge ${badgeClass}`}>
+            {showLiveDot && <span className="status-indicator-dot" aria-hidden="true" />}
             {statusLabel}
           </span>
         </div>
