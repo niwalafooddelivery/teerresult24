@@ -5,6 +5,22 @@ import {
   processReviewApproval,
   processReviewRejection,
 } from '@/lib/review-manager';
+import { revalidatePath } from 'next/cache';
+
+function revalidatePublicPages() {
+  try {
+    revalidatePath('/');
+    revalidatePath('/api/results/today/');
+    revalidatePath('/shillong-teer-result/');
+    revalidatePath('/khanapara-teer-result/');
+    revalidatePath('/juwai-teer-result/');
+    revalidatePath('/shillong-night-teer/');
+    revalidatePath('/previous-results/');
+    revalidatePath('/teer-result-history/');
+  } catch (err) {
+    console.warn('[revalidatePublicPages] Cache revalidation warning:', err?.message || err);
+  }
+}
 
 /**
  * Admin Pending Review Queue API
@@ -104,6 +120,8 @@ export async function POST(request) {
       options: body,
       prismaClient: prisma,
     });
+
+    revalidatePublicPages();
 
     return NextResponse.json({
       success: true,

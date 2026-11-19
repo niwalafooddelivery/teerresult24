@@ -24,12 +24,19 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ username, password }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      let data = {};
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        throw new Error('Server returned unexpected response. Please retry in a few moments.');
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      router.push('/admin/dashboard');
+      router.push('/admin/dashboard/');
     } catch (err) {
       setError(err.message);
     } finally {

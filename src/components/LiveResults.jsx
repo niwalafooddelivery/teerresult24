@@ -11,7 +11,10 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
   const fetchLatest = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/results/today');
+      const res = await fetch('/api/results/today/');
+      if (!res.ok) return;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return;
       const data = await res.json();
       if (data.success && data.results) {
         setResults(data.results);

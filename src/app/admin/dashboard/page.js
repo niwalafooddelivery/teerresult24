@@ -17,6 +17,20 @@ function getClientTodayIST() {
   }
 }
 
+async function safeJsonFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text().catch(() => '');
+    const err = new Error(`Server returned unexpected response (${res.status}): ${text.slice(0, 100)}`);
+    err.status = res.status;
+    err.isNonJson = true;
+    throw err;
+  }
+  const data = await res.json();
+  return { res, data };
+}
+
 export default function AdminDashboardPage() {
   const router = useRouter();
 
@@ -56,29 +70,31 @@ export default function AdminDashboardPage() {
       setStatusError('');
 
       // 1. Verify Authentication
-      const authRes = await fetch('/api/admin/me/');
-      const authData = await authRes.json();
-      if (!authRes.ok || !authData.authenticated) {
-        router.push('/admin/login');
+      try {
+        const { res: authRes, data: authData } = await safeJsonFetch('/api/admin/me/');
+        if (!authRes.ok || !authData.authenticated) {
+          router.push('/admin/login/');
+          return;
+        }
+      } catch (authErr) {
+        router.push('/admin/login/');
         return;
       }
 
       // 2. Fetch categories from dedicated endpoint /api/admin/categories/
       let cats = [];
       try {
-        const catRes = await fetch('/api/admin/categories/');
-        const catData = await catRes.json();
+        const { data: catData } = await safeJsonFetch('/api/admin/categories/');
         if (catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
           cats = catData.categories;
         }
       } catch (catErr) {
-        console.warn('Failed to fetch from /api/admin/categories/:', catErr);
+        console.warn('Failed to fetch from /api/admin/categories/:', catErr.message || catErr);
       }
 
       // 3. Load today results
       try {
-        const res = await fetch('/api/results/today/');
-        const data = await res.json();
+        const { data } = await safeJsonFetch('/api/results/today/');
         if (data.success && Array.isArray(data.results)) {
           setTodayResults(data.results);
           if (data.date) setStatusDateStr(data.date);
@@ -110,17 +126,16 @@ export default function AdminDashboardPage() {
 
       // 4. Load pending reviews
       try {
-        const reviewsRes = await fetch('/api/admin/reviews/?status=PENDING');
-        const reviewsData = await reviewsRes.json();
+        const { data: reviewsData } = await safeJsonFetch('/api/admin/reviews/?status=PENDING');
         if (reviewsData.success) {
           setPendingReviews(reviewsData.reviews || []);
         }
       } catch (revErr) {
-        console.warn('Failed to load pending reviews:', revErr);
+        console.warn('Failed to load pending reviews:', revErr.message || revErr);
       }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      router.push('/admin/login');
+      router.push('/admin/login/');
     } finally {
       setFetching(false);
       setCategoriesLoading(false);
@@ -130,9 +145,9 @@ export default function AdminDashboardPage() {
   const handleLogout = async () => {
     try {
       await fetch('/api/admin/logout/', { method: 'POST' });
-      router.push('/admin/login');
+      router.push('/admin/login/');
     } catch {
-      router.push('/admin/login');
+      router.push('/admin/login/');
     }
   };
 
@@ -170,7 +185,7 @@ export default function AdminDashboardPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/admin/publish/', {
+      const { res, data } = await safeJsonFetch('/api/admin/publish/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -185,7 +200,6 @@ export default function AdminDashboardPage() {
         }),
       });
 
-      const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Failed to publish result');
       }
@@ -205,12 +219,11 @@ export default function AdminDashboardPage() {
     setMessage({ text: '', type: '' });
     try {
       const payload = { reviewId, action, ...options };
-      const res = await fetch('/api/admin/reviews/', {
+      const { res, data } = await safeJsonFetch('/api/admin/reviews/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || `Failed to ${action} review`);
       }
@@ -227,8 +240,7 @@ export default function AdminDashboardPage() {
     setSyncLoading(true);
     setMessage({ text: '', type: '' });
     try {
-      const res = await fetch('/api/admin/sync/', { method: 'POST' });
-      const data = await res.json();
+      const { res, data } = await safeJsonFetch('/api/admin/sync/', { method: 'POST' });
       if (!res.ok || !data.success) {
         throw new Error(data.error || data.message || 'Sync failed');
       }

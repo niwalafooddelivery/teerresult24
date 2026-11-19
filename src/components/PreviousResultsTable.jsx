@@ -30,6 +30,9 @@ export default function PreviousResultsTable({
       params.append('limit', String(limit));
 
       const res = await fetch(`/api/results/history/?${params.toString()}`);
+      if (!res.ok) return;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return;
       const data = await res.json();
       if (data.success && data.results) {
         setResults(data.results);

@@ -2,8 +2,24 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
 import { recordAdminResult } from '@/lib/publish-manager';
+import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
+
+function revalidatePublicPages() {
+  try {
+    revalidatePath('/');
+    revalidatePath('/api/results/today/');
+    revalidatePath('/shillong-teer-result/');
+    revalidatePath('/khanapara-teer-result/');
+    revalidatePath('/juwai-teer-result/');
+    revalidatePath('/shillong-night-teer/');
+    revalidatePath('/previous-results/');
+    revalidatePath('/teer-result-history/');
+  } catch (err) {
+    console.warn('[revalidatePublicPages] Cache revalidation warning:', err?.message || err);
+  }
+}
 
 export async function POST(request) {
   try {
@@ -19,12 +35,24 @@ export async function POST(request) {
       );
     }
 
-    const body = await request.json();
+    let body = {};
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON request payload' },
+        { status: 400 }
+      );
+    }
 
     const publishOutcome = await recordAdminResult({
       ...body,
       user,
     }, prisma);
+
+    if (publishOutcome?.published) {
+      revalidatePublicPages();
+    }
 
     return NextResponse.json(publishOutcome);
   } catch (error) {
