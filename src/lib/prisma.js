@@ -25,25 +25,30 @@ const globalForPrisma = globalThis;
  * 3. Node environment: process.env.DATABASE_URL
  */
 export function getResolvedDatabaseConfig() {
+  let cf = null;
   // 1. Try Cloudflare Context (Workers runtime request scope)
   try {
-    const cf = getCloudflareContext();
-    if (cf?.env?.HYPERDRIVE?.connectionString) {
-      return {
-        url: cf.env.HYPERDRIVE.connectionString,
-        source: 'Cloudflare Hyperdrive (HYPERDRIVE binding)',
-        isHyperdrive: true,
-      };
-    }
-    if (cf?.env?.DATABASE_URL) {
-      return {
-        url: cf.env.DATABASE_URL,
-        source: 'Cloudflare Environment Secret (DATABASE_URL)',
-        isHyperdrive: false,
-      };
-    }
+    cf = getCloudflareContext();
   } catch (_ctxErr) {
     // getCloudflareContext throws outside request context (build time, CLI, local scripts)
+  }
+
+  if (cf?.env?.HYPERDRIVE?.connectionString) {
+    return {
+      url: cf.env.HYPERDRIVE.connectionString,
+      source: 'Cloudflare Hyperdrive (HYPERDRIVE binding)',
+      isHyperdrive: true,
+      cf,
+    };
+  }
+
+  if (cf?.env?.DATABASE_URL) {
+    return {
+      url: cf.env.DATABASE_URL,
+      source: 'Cloudflare Environment Secret (DATABASE_URL)',
+      isHyperdrive: false,
+      cf,
+    };
   }
 
   // 2. Process environment fallback (Node CLI, local dev, migrations, tests)
@@ -53,25 +58,75 @@ export function getResolvedDatabaseConfig() {
       url: envUrl,
       source: 'Process Environment (process.env.DATABASE_URL)',
       isHyperdrive: false,
+      cf: null,
     };
   }
 
-  return { url: '', source: 'None', isHyperdrive: false };
+  return { url: '', source: 'None', isHyperdrive: false, cf: null };
 }
 
 /**
  * Lazily creates or reuses the PrismaClient instance with @prisma/adapter-pg.
- * Does NOT run at module evaluation time, preventing Worker startup crashes.
+ * - In Cloudflare Workers: Scoped to the request (cf) so dead TCP sockets never linger across requests.
+ * - In Node CLI / Tests: Scoped to globalThis singleton.
  */
 export function getPrismaClient() {
-  const { url, source, isHyperdrive } = getResolvedDatabaseConfig();
+  const { url, source, isHyperdrive, cf } = getResolvedDatabaseConfig();
 
-  // If already instantiated with the same URL, reuse singleton
+  // Mode A: Cloudflare Workers Request Scope
+  // Sockets are scoped to the individual request (cf) so frozen isolates never reuse dead sockets
+  if (cf) {
+    if (cf.__prismaClient) {
+      return cf.__prismaClient;
+    }
+
+    if (url && (url.startsWith('postgres://') || url.startsWith('postgresql://'))) {
+      try {
+        const pool = new Pool({
+          connectionString: url,
+          max: 2, // Hyperdrive already maintains an upstream pool
+          connectionTimeoutMillis: 5000,
+          idleTimeoutMillis: 1000,
+        });
+
+        pool.on('error', (err) => {
+          console.warn('[Workers Hyperdrive Pool Warning]:', err.message || err);
+        });
+
+        // Gracefully clean up pool after response streams to prevent socket leaks in isolate
+        if (cf.ctx && typeof cf.ctx.waitUntil === 'function') {
+          cf.ctx.waitUntil(
+            (async () => {
+              try {
+                await new Promise((r) => setTimeout(r, 200));
+                await pool.end();
+              } catch {}
+            })()
+          );
+        }
+
+        const adapter = new PrismaPg(pool);
+        const client = new PrismaClient({
+          adapter,
+          log: ['error'],
+        });
+
+        cf.__prismaClient = client;
+        cf.__pgPool = pool;
+        return client;
+      } catch (err) {
+        console.error(`[PrismaClient] Workers initialization failed via ${source}:`, err.message || err);
+        throw err;
+      }
+    }
+  }
+
+  // Mode B: Local Node Environment / Unit Tests / CLI (Global singleton)
   if (globalForPrisma.__prismaClient && globalForPrisma.__prismaUrl === url) {
     return globalForPrisma.__prismaClient;
   }
 
-  // 1. PostgreSQL (Production Cloudflare Workers, Hyperdrive, Neon, Supabase)
+  // 1. PostgreSQL (Node.js runtime)
   if (url && (url.startsWith('postgres://') || url.startsWith('postgresql://'))) {
     try {
       if (globalForPrisma.__pgPool) {
@@ -87,7 +142,7 @@ export function getPrismaClient() {
       });
 
       pool.on('error', (err) => {
-        console.error('[Database Pool Error]:', err.message || err);
+        console.warn('[Node Database Pool Warning]:', err.message || err);
       });
 
       const adapter = new PrismaPg(pool);
@@ -100,10 +155,9 @@ export function getPrismaClient() {
       globalForPrisma.__prismaUrl = url;
       globalForPrisma.__pgPool = pool;
 
-      console.log(`[PrismaClient] Initialized via ${source}: ${sanitizeDatabaseUrl(url)}`);
       return client;
     } catch (err) {
-      console.error(`[PrismaClient] Initialization failed via ${source} (${sanitizeDatabaseUrl(url)}):`, err.message || err);
+      console.error(`[PrismaClient] Node initialization failed via ${source} (${sanitizeDatabaseUrl(url)}):`, err.message || err);
       throw err;
     }
   }
@@ -118,8 +172,7 @@ export function getPrismaClient() {
     return client;
   }
 
-  // 3. Fallback when no database URL is available (e.g. build time static evaluation)
-  // Throw a clear descriptive error instead of calling new PrismaClient() without adapter in Workers
+  // 3. Fallback when no database URL is available
   throw new Error(
     `[PrismaClient] No database connection configured. Please ensure Cloudflare Hyperdrive binding (HYPERDRIVE) or DATABASE_URL secret is set in Cloudflare Dashboard.`
   );

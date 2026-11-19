@@ -2,7 +2,7 @@ import prisma from '@/lib/prisma';
 import PreviousResultsTable from '@/components/PreviousResultsTable';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 120;
 
 export const metadata = {
   title: 'Teer Result History - Multi-Year Archery Record Search | TeerResult',
@@ -19,42 +19,56 @@ export default async function TeerResultHistoryPage() {
   let history = [];
 
   try {
-    const res = await Promise.all([
-      prisma.gameCategory.findMany({
-        where: { isActive: true },
-        orderBy: { order: 'asc' },
-      }),
-      prisma.teerResult.count(),
-      prisma.teerResult.findMany({
-        orderBy: [
-          { dateStr: 'desc' },
-          { category: { order: 'asc' } },
-        ],
-        take: 25,
-        include: {
-          category: {
-            select: {
-              name: true,
-              slug: true,
-              location: true,
-              round1Time: true,
-              round2Time: true,
-            },
+    categories = await prisma.gameCategory.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        order: true,
+      },
+      orderBy: { order: 'asc' },
+    });
+  } catch (err) {
+    console.warn('[TeerResultHistoryPage] Category query failed, using fallback:', err.message || err);
+    categories = [
+      { id: 'shillong-teer', name: 'Shillong Teer', slug: 'shillong-teer' },
+      { id: 'khanapara-teer', name: 'Khanapara Teer', slug: 'khanapara-teer' },
+      { id: 'juwai-teer', name: 'Juwai Teer', slug: 'juwai-teer' },
+      { id: 'shillong-night-teer', name: 'Shillong Night Teer', slug: 'shillong-night-teer' },
+    ];
+  }
+
+  try {
+    history = await prisma.teerResult.findMany({
+      orderBy: { dateStr: 'desc' },
+      take: 25,
+      select: {
+        id: true,
+        dateStr: true,
+        round1: true,
+        round2: true,
+        isVerified: true,
+        category: {
+          select: {
+            name: true,
+            slug: true,
+            location: true,
+            round1Time: true,
+            round2Time: true,
           },
         },
-      }),
-    ]);
-    categories = res[0];
-    totalCount = res[1];
-    history = res[2];
+      },
+    });
   } catch (err) {
-    console.warn('[TeerResultHistoryPage] Database unavailable:', err.message || err);
-    categories = [
-      { id: '1', name: 'Shillong Teer', slug: 'shillong-teer' },
-      { id: '2', name: 'Khanapara Teer', slug: 'khanapara-teer' },
-      { id: '3', name: 'Juwai Teer', slug: 'juwai-teer' },
-      { id: '4', name: 'Shillong Night Teer', slug: 'shillong-night-teer' },
-    ];
+    console.warn('[TeerResultHistoryPage] History query failed:', err.message || err);
+    history = [];
+  }
+
+  try {
+    totalCount = await prisma.teerResult.count();
+  } catch (err) {
+    totalCount = history.length;
   }
 
   return (

@@ -1,8 +1,8 @@
 import prisma from '@/lib/prisma';
-import { getTodayISTDateStr, formatISTDisplayDate } from '@/lib/date-utils';
+import { getTodayISTDateStr, formatISTDisplayDate, getDayOfWeekFromDateStr } from '@/lib/date-utils';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Shillong Teer Result Today - FR & SR Live | TeerResult',
@@ -20,10 +20,24 @@ export default async function ShillongTeerPage() {
   try {
     category = await prisma.gameCategory.findUnique({
       where: { slug: 'shillong-teer' },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        location: true,
+        round1Time: true,
+        round2Time: true,
         results: {
           orderBy: { dateStr: 'desc' },
           take: 30,
+          select: {
+            id: true,
+            dateStr: true,
+            round1: true,
+            round2: true,
+            status: true,
+            isVerified: true,
+          },
         },
       },
     });
@@ -39,7 +53,7 @@ export default async function ShillongTeerPage() {
     };
   }
 
-  const todayResult = category?.results.find((r) => r.dateStr === todayStr);
+  const todayResult = category?.results?.find((r) => r.dateStr === todayStr);
   const isDeclared = Boolean(todayResult?.round1 && todayResult?.round2);
   const isPartial = Boolean(todayResult?.round1 && !todayResult?.round2);
   const isVerified = Boolean(todayResult?.isVerified);
@@ -136,8 +150,7 @@ export default async function ShillongTeerPage() {
             <tbody>
               {category?.results && category.results.length > 0 ? (
                 category.results.map((r) => {
-                  const d = new Date(r.dateStr + 'T12:00:00+05:30');
-                  const dayName = d.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'Asia/Kolkata' });
+                  const dayName = getDayOfWeekFromDateStr(r.dateStr);
                   return (
                     <tr key={r.id}>
                       <td style={{ fontWeight: 600 }}>{r.dateStr}</td>

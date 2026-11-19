@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 export const metadata = {
   title: 'Correction Policy - Archery Score Audit & Transparency | TeerResult',
@@ -18,10 +18,23 @@ export default async function CorrectionPolicyPage() {
     recentCorrections = await prisma.correctionLog.findMany({
       take: 20,
       orderBy: { createdAt: 'desc' },
-      include: {
+      select: {
+        id: true,
+        roundNumber: true,
+        oldValue: true,
+        newValue: true,
+        reason: true,
+        correctedBy: true,
+        createdAt: true,
         result: {
-          include: {
-            category: true,
+          select: {
+            dateStr: true,
+            category: {
+              select: {
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
       },

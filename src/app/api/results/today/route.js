@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getTodayISTDateStr } from '@/lib/date-utils';
-import { ensureOfficialCategories, OFFICIAL_CATEGORIES } from '@/lib/categories';
-import { ensureDatabaseBootstrap } from '@/lib/db-bootstrap';
+import { OFFICIAL_CATEGORIES } from '@/lib/categories';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,47 +14,33 @@ export async function GET() {
       categories = await prisma.gameCategory.findMany({
         where: { isActive: true },
         orderBy: { order: 'asc' },
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          location: true,
+          round1Time: true,
+          round2Time: true,
+          order: true,
+          updatedAt: true,
           results: {
             where: { dateStr: todayStr },
             take: 1,
+            select: {
+              round1: true,
+              round2: true,
+              status: true,
+              isVerified: true,
+              sourceInfo: true,
+              sourceEvidenceUrl: true,
+              updatedAt: true,
+            },
           },
         },
       });
-
-      // If database is unseeded, auto-bootstrap and seed the 4 official categories
-      if (!categories || categories.length === 0) {
-        await ensureDatabaseBootstrap(prisma).catch(() => {});
-        await ensureOfficialCategories(prisma).catch(() => {});
-        categories = await prisma.gameCategory.findMany({
-          where: { isActive: true },
-          orderBy: { order: 'asc' },
-          include: {
-            results: {
-              where: { dateStr: todayStr },
-              take: 1,
-            },
-          },
-        });
-      }
     } catch (dbErr) {
-      console.warn('[api/results/today] Database query failed, attempting self-healing bootstrap:', dbErr.message || dbErr);
-      try {
-        await ensureDatabaseBootstrap(prisma);
-        await ensureOfficialCategories(prisma);
-        categories = await prisma.gameCategory.findMany({
-          where: { isActive: true },
-          orderBy: { order: 'asc' },
-          include: {
-            results: {
-              where: { dateStr: todayStr },
-              take: 1,
-            },
-          },
-        });
-      } catch (retryErr) {
-        console.warn('[api/results/today] Retry after bootstrap failed, using canonical fallback:', retryErr.message || retryErr);
-      }
+      console.warn('[api/results/today] Database query failed, using canonical fallback:', dbErr.message || dbErr);
+      categories = [];
     }
 
     // Graceful fallback if database has no categories or is unmigrated
@@ -76,11 +61,19 @@ export async function GET() {
         updatedAt: new Date().toISOString(),
       }));
 
-      return NextResponse.json({
-        success: true,
-        date: todayStr,
-        results: fallbackData,
-      });
+      return NextResponse.json(
+        {
+          success: true,
+          date: todayStr,
+          results: fallbackData,
+        },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=15, stale-while-revalidate=45',
+            'CDN-Cache-Control': 'public, max-age=15, stale-while-revalidate=45',
+          },
+        }
+      );
     }
 
     const liveData = categories.map((cat) => {
@@ -102,11 +95,19 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json({
-      success: true,
-      date: todayStr,
-      results: liveData,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        date: todayStr,
+        results: liveData,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=15, stale-while-revalidate=45',
+          'CDN-Cache-Control': 'public, max-age=15, stale-while-revalidate=45',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching today results:', error);
     return NextResponse.json(

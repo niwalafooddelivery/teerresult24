@@ -81,21 +81,26 @@ export default function AdminDashboardPage() {
         return;
       }
 
-      // 2. Fetch categories from dedicated endpoint /api/admin/categories/
+      // 2. Fetch categories, today results, and pending reviews in parallel for fast initial load
+      const [catResult, todayResult, reviewsResult] = await Promise.allSettled([
+        safeJsonFetch('/api/admin/categories/'),
+        safeJsonFetch('/api/results/today/'),
+        safeJsonFetch('/api/admin/reviews/?status=PENDING'),
+      ]);
+
       let cats = [];
-      try {
-        const { data: catData } = await safeJsonFetch('/api/admin/categories/');
-        if (catData.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
+      if (catResult.status === 'fulfilled') {
+        const catData = catResult.value.data;
+        if (catData?.success && Array.isArray(catData.categories) && catData.categories.length > 0) {
           cats = catData.categories;
         }
-      } catch (catErr) {
-        console.warn('Failed to fetch from /api/admin/categories/:', catErr.message || catErr);
+      } else {
+        console.warn('Failed to fetch from /api/admin/categories/:', catResult.reason?.message || catResult.reason);
       }
 
-      // 3. Load today results
-      try {
-        const { data } = await safeJsonFetch('/api/results/today/');
-        if (data.success && Array.isArray(data.results)) {
+      if (todayResult.status === 'fulfilled') {
+        const data = todayResult.value.data;
+        if (data?.success && Array.isArray(data.results)) {
           setTodayResults(data.results);
           if (data.date) setStatusDateStr(data.date);
 
@@ -110,11 +115,11 @@ export default function AdminDashboardPage() {
             }));
           }
         } else {
-          setStatusError(data.error || 'Unable to load today status summary');
+          setStatusError(data?.error || 'Unable to load today status summary');
         }
-      } catch (todayErr) {
-        console.error('Failed to load today results:', todayErr);
-        setStatusError(todayErr.message || 'Network error fetching status');
+      } else {
+        console.error('Failed to load today results:', todayResult.reason);
+        setStatusError(todayResult.reason?.message || 'Network error fetching status');
       }
 
       setCategories(cats);
@@ -124,14 +129,13 @@ export default function AdminDashboardPage() {
         setCategoriesError('No competition categories found in database.');
       }
 
-      // 4. Load pending reviews
-      try {
-        const { data: reviewsData } = await safeJsonFetch('/api/admin/reviews/?status=PENDING');
-        if (reviewsData.success) {
+      if (reviewsResult.status === 'fulfilled') {
+        const reviewsData = reviewsResult.value.data;
+        if (reviewsData?.success) {
           setPendingReviews(reviewsData.reviews || []);
         }
-      } catch (revErr) {
-        console.warn('Failed to load pending reviews:', revErr.message || revErr);
+      } else {
+        console.warn('Failed to load pending reviews:', reviewsResult.reason?.message || reviewsResult.reason);
       }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);

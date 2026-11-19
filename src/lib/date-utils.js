@@ -105,6 +105,26 @@ export function isValidCalendarDate(dateStr) {
 }
 
 /**
+ * Safely computes short weekday name (e.g. 'Mon', 'Tue') from 'YYYY-MM-DD' in Asia/Kolkata timezone.
+ * Resilient against null, undefined, or malformed inputs without throwing RangeError.
+ */
+export function getDayOfWeekFromDateStr(dateStr) {
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  const parts = dateStr.trim().split('-');
+  if (parts.length !== 3) return '';
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return '';
+  const dateObj = new Date(Date.UTC(y, m, d, 12, 0, 0));
+  if (isNaN(dateObj.getTime())) return '';
+  return dateObj.toLocaleDateString('en-IN', {
+    weekday: 'short',
+    timeZone: 'Asia/Kolkata',
+  });
+}
+
+/**
  * Validates a Teer score: must be null, empty, or exactly two digits "00" - "99".
  * Preserves leading zeros (e.g. '04', not '4').
  */

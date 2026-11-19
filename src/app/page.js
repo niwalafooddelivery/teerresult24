@@ -4,7 +4,7 @@ import LiveResults from '@/components/LiveResults';
 import PreviousResultsTable from '@/components/PreviousResultsTable';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 30;
 
 export const metadata = {
   title: 'Teer Result Today – Shillong, Khanapara & Juwai Live | TeerResult',
@@ -36,12 +36,28 @@ export default async function HomePage() {
     categories = await prisma.gameCategory.findMany({
       where: { isActive: true },
       orderBy: { order: 'asc' },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        location: true,
+        round1Time: true,
+        round2Time: true,
+        order: true,
         results: {
           where: {
             dateStr: {
               in: [todayStr, yesterdayStr],
             },
+          },
+          select: {
+            dateStr: true,
+            round1: true,
+            round2: true,
+            status: true,
+            isVerified: true,
+            sourceInfo: true,
+            updatedAt: true,
           },
         },
       },
@@ -145,12 +161,14 @@ export default async function HomePage() {
   let recentHistory = [];
   try {
     recentHistory = await prisma.teerResult.findMany({
-      orderBy: [
-        { dateStr: 'desc' },
-        { category: { order: 'asc' } },
-      ],
+      orderBy: { dateStr: 'desc' },
       take: 10,
-      include: {
+      select: {
+        id: true,
+        dateStr: true,
+        round1: true,
+        round2: true,
+        isVerified: true,
         category: {
           select: {
             name: true,
@@ -252,41 +270,49 @@ export default async function HomePage() {
         </div>
 
         <div className="table-responsive">
-          <table className="history-table">
+          <table className="history-table" aria-label="Recent Verified Teer Results">
             <thead>
               <tr>
-                <th>Date (IST)</th>
-                <th>Game / Session</th>
-                <th>First Round (FR)</th>
-                <th>Second Round (SR)</th>
-                <th>Status</th>
+                <th scope="col">Date (IST)</th>
+                <th scope="col">Game / Session</th>
+                <th scope="col">First Round (FR)</th>
+                <th scope="col">Second Round (SR)</th>
+                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody>
-              {recentHistory.map((item) => (
-                <tr key={item.id}>
-                  <td style={{ fontWeight: 600 }}>{item.dateStr}</td>
-                  <td>
-                    <Link
-                      href={item.category.slug === 'shillong-night-teer' ? '/shillong-night-teer/' : `/${item.category.slug}-result/`}
-                      style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: 600 }}
-                    >
-                      {item.category.name}
-                    </Link>
-                  </td>
-                  <td>
-                    <span className="table-score score-highlight">{item.round1 || '--'}</span>
-                  </td>
-                  <td>
-                    <span className="table-score">{item.round2 || '--'}</span>
-                  </td>
-                  <td>
-                    <span className={`card-badge ${item.isVerified ? 'badge-live' : 'badge-done'}`} style={{ fontSize: '0.72rem', padding: '2px 8px' }}>
-                      {item.isVerified ? 'Verified' : 'Archived'}
-                    </span>
+              {recentHistory.length === 0 ? (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '24px 16px', color: 'var(--text-muted)' }}>
+                    Daily archival records are updated following official association score declarations.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                recentHistory.map((item) => (
+                  <tr key={item.id}>
+                    <td style={{ fontWeight: 600 }}>{item.dateStr}</td>
+                    <td>
+                      <Link
+                        href={item.category.slug === 'shillong-night-teer' ? '/shillong-night-teer/' : `/${item.category.slug}-result/`}
+                        style={{ color: 'var(--text-main)', textDecoration: 'none', fontWeight: 600 }}
+                      >
+                        {item.category.name}
+                      </Link>
+                    </td>
+                    <td>
+                      <span className="table-score score-highlight">{item.round1 || '--'}</span>
+                    </td>
+                    <td>
+                      <span className="table-score">{item.round2 || '--'}</span>
+                    </td>
+                    <td>
+                      <span className={`card-badge ${item.isVerified ? 'badge-live' : 'badge-done'}`} style={{ fontSize: '0.72rem', padding: '2px 8px' }}>
+                        {item.isVerified ? 'Verified' : 'Archived'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

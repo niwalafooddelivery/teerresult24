@@ -22,29 +22,37 @@ export async function GET(request) {
       whereClause.dateStr = dateStr;
     }
 
-    const [totalCount, results] = await Promise.all([
-      prisma.teerResult.count({ where: whereClause }),
-      prisma.teerResult.findMany({
-        where: whereClause,
-        orderBy: [
-          { dateStr: 'desc' },
-          { category: { order: 'asc' } },
-        ],
-        skip,
-        take: limit,
-        include: {
-          category: {
-            select: {
-              name: true,
-              slug: true,
-              location: true,
-              round1Time: true,
-              round2Time: true,
-            },
+    const results = await prisma.teerResult.findMany({
+      where: whereClause,
+      orderBy: { dateStr: 'desc' },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        dateStr: true,
+        round1: true,
+        round2: true,
+        status: true,
+        isVerified: true,
+        sourceInfo: true,
+        category: {
+          select: {
+            name: true,
+            slug: true,
+            location: true,
+            round1Time: true,
+            round2Time: true,
           },
         },
-      }),
-    ]);
+      },
+    });
+
+    let totalCount = results.length;
+    try {
+      totalCount = await prisma.teerResult.count({ where: whereClause });
+    } catch {
+      totalCount = results.length;
+    }
 
     const formatted = results.map((r) => ({
       id: r.id,
@@ -57,14 +65,22 @@ export async function GET(request) {
       category: r.category,
     }));
 
-    return NextResponse.json({
-      success: true,
-      totalCount,
-      page,
-      limit,
-      totalPages: Math.ceil(totalCount / limit),
-      results: formatted,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+        results: formatted,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+          'CDN-Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+        },
+      }
+    );
   } catch (error) {
     console.error('Error fetching history results:', error);
     return NextResponse.json(

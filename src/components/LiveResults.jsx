@@ -28,9 +28,29 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
   };
 
   useEffect(() => {
-    // Polling interval: 45 seconds
-    const interval = setInterval(fetchLatest, 45000);
-    return () => clearInterval(interval);
+    // Only poll when the tab is actively visible to save mobile battery and network data
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      fetchLatest();
+    }, 45000);
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        // Refresh immediately when returning to the tab
+        fetchLatest();
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+    };
   }, []);
 
   return (
