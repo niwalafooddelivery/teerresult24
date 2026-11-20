@@ -93,18 +93,6 @@ export function getPrismaClient() {
           console.warn('[Workers Hyperdrive Pool Warning]:', err.message || err);
         });
 
-        // Gracefully clean up pool after response streams to prevent socket leaks in isolate
-        if (cf.ctx && typeof cf.ctx.waitUntil === 'function') {
-          cf.ctx.waitUntil(
-            (async () => {
-              try {
-                await new Promise((r) => setTimeout(r, 200));
-                await pool.end();
-              } catch {}
-            })()
-          );
-        }
-
         const adapter = new PrismaPg(pool);
         const client = new PrismaClient({
           adapter,

@@ -48,20 +48,27 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'PENDING';
 
-    const reviews = await prisma.pendingResultReview.findMany({
-      where: status === 'ALL' ? {} : { status },
-      include: {
-        category: {
-          select: { name: true, slug: true, round1Time: true, round2Time: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
-    });
+    let reviews = [];
+    let pendingCount = 0;
 
-    const pendingCount = await prisma.pendingResultReview.count({
-      where: { status: 'PENDING' },
-    });
+    try {
+      reviews = await prisma.pendingResultReview.findMany({
+        where: status === 'ALL' ? {} : { status },
+        include: {
+          category: {
+            select: { name: true, slug: true, round1Time: true, round2Time: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      });
+
+      pendingCount = await prisma.pendingResultReview.count({
+        where: { status: 'PENDING' },
+      });
+    } catch (dbErr) {
+      console.warn('[api/admin/reviews] Database review query failed, returning safe empty review queue:', dbErr.message || dbErr);
+    }
 
     return NextResponse.json({
       success: true,

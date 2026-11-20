@@ -45,15 +45,20 @@ export async function GET(request) {
       );
     }
 
-    const recentJobs = await prisma.importJob.findMany({
-      take: 10,
-      orderBy: { startedAt: 'desc' },
-    });
-
-    const recentSourceRecords = await prisma.sourceRecord.findMany({
-      take: 5,
-      orderBy: { fetchedAt: 'desc' },
-    });
+    let recentJobs = [];
+    let recentSourceRecords = [];
+    try {
+      recentJobs = await prisma.importJob.findMany({
+        take: 10,
+        orderBy: { startedAt: 'desc' },
+      });
+      recentSourceRecords = await prisma.sourceRecord.findMany({
+        take: 5,
+        orderBy: { fetchedAt: 'desc' },
+      });
+    } catch (dbErr) {
+      console.warn('[api/admin/sync] Database query failed for jobs/records:', dbErr.message || dbErr);
+    }
 
     return NextResponse.json({
       success: true,

@@ -39,7 +39,15 @@ export async function GET(request) {
     // 3. Ensure official categories exist
     await ensureOfficialCategories(prisma);
 
-    // 4. Query categories
+    // 4. Query tables
+    try {
+      const tableRows = await prisma.$queryRawUnsafe(`
+        SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'
+      `);
+      diagnostics.tablesFound = (tableRows || []).map((r) => r.table_name);
+    } catch {}
+
+    // 5. Query categories
     const categories = await prisma.gameCategory.findMany({
       orderBy: { order: 'asc' },
     });
