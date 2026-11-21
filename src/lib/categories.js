@@ -48,6 +48,28 @@ export const OFFICIAL_CATEGORIES = [
     order: 4,
     isActive: true,
   },
+  {
+    id: 'shillong-morning-teer',
+    name: 'Shillong Morning Teer',
+    slug: 'shillong-morning-teer',
+    location: 'Polo Grounds / Morning Session, Shillong, Meghalaya',
+    round1Time: '10:30 AM',
+    round2Time: '11:30 AM',
+    description: 'Daily morning edition traditional archery session results for Shillong.',
+    order: 5,
+    isActive: true,
+  },
+  {
+    id: 'welcome-morning-teer',
+    name: 'Welcome Morning Teer',
+    slug: 'welcome-morning-teer',
+    location: 'Meghalaya / Assam Border Morning Archery Club',
+    round1Time: '10:30 AM',
+    round2Time: '11:30 AM',
+    description: 'Welcome Morning traditional archery morning round results.',
+    order: 6,
+    isActive: true,
+  },
 ];
 
 /**
@@ -79,6 +101,14 @@ export function resolveCanonicalCategorySlug(input) {
     'night-teer': 'shillong-night-teer',
     'shillong-night': 'shillong-night-teer',
     'shillong-night-teer': 'shillong-night-teer',
+    'shillong-morning': 'shillong-morning-teer',
+    'shillong-morning-teer': 'shillong-morning-teer',
+    'morning': 'shillong-morning-teer',
+    'morning-teer': 'shillong-morning-teer',
+    'welcome': 'welcome-morning-teer',
+    'welcome-teer': 'welcome-morning-teer',
+    'welcome-morning': 'welcome-morning-teer',
+    'welcome-morning-teer': 'welcome-morning-teer',
   };
 
   return CANONICAL_MAP[s] || s;

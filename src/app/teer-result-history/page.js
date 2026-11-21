@@ -47,6 +47,8 @@ export default async function TeerResultHistoryPage() {
       { id: 'khanapara-teer', name: 'Khanapara Teer', slug: 'khanapara-teer' },
       { id: 'juwai-teer', name: 'Juwai Teer', slug: 'juwai-teer' },
       { id: 'shillong-night-teer', name: 'Shillong Night Teer', slug: 'shillong-night-teer' },
+      { id: 'shillong-morning-teer', name: 'Shillong Morning Teer', slug: 'shillong-morning-teer' },
+      { id: 'welcome-morning-teer', name: 'Welcome Morning Teer', slug: 'welcome-morning-teer' },
     ];
   }
 

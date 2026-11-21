@@ -26,8 +26,22 @@ const ALL_GAMES = [
     slug: 'shillong-night-teer',
     name: 'Shillong Night Teer',
     href: '/shillong-night-teer/',
-    timing: 'FR 10:30 PM • SR 11:30 PM',
+    timing: 'FR 10:15 PM • SR 11:15 PM',
     location: 'Night Session, Meghalaya',
+  },
+  {
+    slug: 'shillong-morning-teer',
+    name: 'Shillong Morning Teer',
+    href: '/shillong-morning-teer-result/',
+    timing: 'FR 10:30 AM • SR 11:30 AM',
+    location: 'Morning Session, Shillong',
+  },
+  {
+    slug: 'welcome-morning-teer',
+    name: 'Welcome Morning Teer',
+    href: '/welcome-morning-teer-result/',
+    timing: 'FR 10:30 AM • SR 11:30 AM',
+    location: 'Morning Archery Club, Meghalaya/Assam Border',
   },
 ];
 

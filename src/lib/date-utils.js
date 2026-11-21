@@ -125,6 +125,16 @@ export function getDayOfWeekFromDateStr(dateStr) {
 }
 
 /**
+ * Resolves the canonical public route for any of the 6 game slugs.
+ */
+export function getGameUrl(slug) {
+  if (slug === 'shillong-night-teer') return '/shillong-night-teer/';
+  if (slug === 'shillong-morning-teer') return '/shillong-morning-teer-result/';
+  if (slug === 'welcome-morning-teer') return '/welcome-morning-teer-result/';
+  return `/${slug}-result/`;
+}
+
+/**
  * Validates a Teer score: must be null, empty, or exactly two digits "00" - "99".
  * Preserves leading zeros (e.g. '04', not '4').
  */

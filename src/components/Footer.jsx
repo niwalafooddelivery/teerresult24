@@ -32,6 +32,8 @@ export default function Footer() {
               <li><Link href="/khanapara-teer-result/">Khanapara Teer Result</Link></li>
               <li><Link href="/juwai-teer-result/">Juwai Teer Result</Link></li>
               <li><Link href="/shillong-night-teer/">Shillong Night Teer</Link></li>
+              <li><Link href="/shillong-morning-teer-result/">Shillong Morning Teer</Link></li>
+              <li><Link href="/welcome-morning-teer-result/">Welcome Morning Teer</Link></li>
             </ul>
           </div>
 

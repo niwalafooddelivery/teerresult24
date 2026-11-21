@@ -15,6 +15,8 @@ export default function Header() {
     { label: 'Shillong Teer', href: '/shillong-teer-result/' },
     { label: 'Khanapara Teer', href: '/khanapara-teer-result/' },
     { label: 'Juwai Teer', href: '/juwai-teer-result/' },
+    { label: 'Morning Teer', href: '/shillong-morning-teer-result/' },
+    { label: 'Welcome Morning', href: '/welcome-morning-teer-result/' },
     { label: 'Night Teer', href: '/shillong-night-teer/' },
     { label: 'Dream Numbers', href: '/teer-dream-numbers/' },
     { label: 'Previous Results', href: '/previous-results/' },

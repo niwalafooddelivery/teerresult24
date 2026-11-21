@@ -85,7 +85,7 @@ async function main() {
       throw new Error('Some required production tables are missing after migration.');
     }
 
-    // 3. Verify the 4 Official Competition Categories
+    // 3. Verify the 6 Official Competition Categories
     console.log('\n--- Verifying Competition Categories ---');
     const catRes = await client.query(`
       SELECT id, name, slug, "round1Time", "round2Time", "order", "isActive"
@@ -98,14 +98,21 @@ async function main() {
       console.log(`  [${cat.order}] ${cat.name} (${cat.slug}) — FR: ${cat.round1Time} | SR: ${cat.round2Time} [Active: ${cat.isActive}]`);
     }
 
-    const expectedSlugs = ['shillong-teer', 'khanapara-teer', 'juwai-teer', 'shillong-night-teer'];
+    const expectedSlugs = [
+      'shillong-teer',
+      'khanapara-teer',
+      'juwai-teer',
+      'shillong-night-teer',
+      'shillong-morning-teer',
+      'welcome-morning-teer',
+    ];
     const presentSlugs = new Set(catRes.rows.map((c) => c.slug));
     const allCategoriesCovered = expectedSlugs.every((slug) => presentSlugs.has(slug));
 
     if (!allCategoriesCovered) {
-      throw new Error('Not all 4 official competition categories are present in the database.');
+      throw new Error('Not all 6 official competition categories are present in the database.');
     }
-    console.log('✓ All 4 official competition categories verified in database.\n');
+    console.log('✓ All 6 official competition categories verified in database.\n');
 
     // 4. Verify Admin User
     console.log('--- Verifying Admin User ---');

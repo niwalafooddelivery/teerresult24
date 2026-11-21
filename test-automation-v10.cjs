@@ -103,6 +103,8 @@ async function runAllTests() {
       { name: 'Khanapara Teer', slug: 'khanapara-teer', round1Time: '04:10 PM', round2Time: '04:45 PM' },
       { name: 'Juwai Teer', slug: 'juwai-teer', round1Time: '02:00 PM', round2Time: '02:45 PM' },
       { name: 'Shillong Night Teer', slug: 'shillong-night-teer', round1Time: '10:30 PM', round2Time: '11:30 PM' },
+      { name: 'Shillong Morning Teer', slug: 'shillong-morning-teer', round1Time: '10:30 AM', round2Time: '11:30 AM' },
+      { name: 'Welcome Morning Teer', slug: 'welcome-morning-teer', round1Time: '10:30 AM', round2Time: '11:30 AM' },
     ];
 
     for (const cat of categoriesToEnsure) {

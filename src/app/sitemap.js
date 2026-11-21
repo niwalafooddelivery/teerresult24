@@ -7,6 +7,8 @@ export default function sitemap() {
     { path: '/khanapara-teer-result/', priority: 0.9, changeFrequency: 'hourly' },
     { path: '/juwai-teer-result/', priority: 0.9, changeFrequency: 'hourly' },
     { path: '/shillong-night-teer/', priority: 0.8, changeFrequency: 'hourly' },
+    { path: '/shillong-morning-teer-result/', priority: 0.85, changeFrequency: 'hourly' },
+    { path: '/welcome-morning-teer-result/', priority: 0.85, changeFrequency: 'hourly' },
     { path: '/teer-dream-numbers/', priority: 0.8, changeFrequency: 'weekly' },
     { path: '/previous-results/', priority: 0.8, changeFrequency: 'daily' },
     { path: '/teer-result-history/', priority: 0.8, changeFrequency: 'daily' },
