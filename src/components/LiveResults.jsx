@@ -10,33 +10,6 @@ function getGameUrl(slug) {
   return `/${slug}-result/`;
 }
 
-function formatCardDate(dateStr) {
-  if (!dateStr || typeof dateStr !== 'string') return '';
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const monthIdx = parseInt(parts[1], 10) - 1;
-  const day = parts[2].padStart(2, '0');
-  const monthName = months[monthIdx] || parts[1];
-  return `${day} ${monthName} ${parts[0]}`;
-}
-
-function formatUpdateTime(isoString) {
-  if (!isoString) return null;
-  try {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return null;
-    return new Intl.DateTimeFormat('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    }).format(d);
-  } catch {
-    return null;
-  }
-}
-
 export default function LiveResults({ initialData = [], currentDateStr = '' }) {
   const [results, setResults] = useState(initialData);
   const [loading, setLoading] = useState(false);
@@ -66,7 +39,7 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       fetchLatest();
-    }, 30000);
+    }, 45000);
 
     const handleVisibilityChange = () => {
       if (typeof document !== 'undefined' && !document.hidden) {
@@ -87,35 +60,25 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
     };
   }, []);
 
-  const displayDate = formatCardDate(currentDateStr);
-
   return (
     <section className="live-section">
       <div className="section-head">
         <div>
           <h2 className="section-title">
-            Today&apos;s Official Teer Results
+            Today&apos;s Official Results
           </h2>
           <p className="section-sub" suppressHydrationWarning>
-            Live traditional archery announcements across Meghalaya and Assam • Last checked at{' '}
-            {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            Daily archery session updates • Last checked at {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </p>
         </div>
 
         <button
           onClick={fetchLatest}
           disabled={loading}
-          className="btn-secondary refresh-btn"
-          title="Retrieve live verified published data from database"
-          aria-label="Refresh results now"
+          className="btn-secondary"
+          title="Refresh results now"
         >
-          {loading ? (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <span className="spinner-icon" aria-hidden="true">↻</span> Fetching...
-            </span>
-          ) : (
-            '↻ Refresh Results'
-          )}
+          {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
@@ -138,14 +101,6 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
             badgeClass = 'live';
             statusText = '1st Round Declared';
             showLiveDot = true;
-          } else if (isDeclared && !isVerified) {
-            badgeClass = 'pending';
-            statusText = 'Pending Approval';
-            showLiveDot = false;
-          } else if (isPartial && !isVerified) {
-            badgeClass = 'pending';
-            statusText = 'FR Under Review';
-            showLiveDot = false;
           } else if (item.status === 'CANCELLED') {
             badgeClass = 'completed';
             statusText = 'Cancelled';
@@ -153,8 +108,6 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
           }
 
           const gameHref = getGameUrl(item.slug);
-          const pastHref = `/previous-results/?category=${item.slug}`;
-          const updatedTimeStr = formatUpdateTime(item.updatedAt);
 
           return (
             <div
@@ -163,20 +116,11 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
               className={`teer-card ${isFeatured ? 'featured' : ''}`}
             >
               <div className="card-top">
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 className="card-title">
-                    <Link href={gameHref} style={{ color: 'inherit', textDecoration: 'none' }}>
-                      {item.name}
-                    </Link>
-                  </h3>
-                  <div className="card-meta-line">
-                    <span className="card-location">{item.location}</span>
-                    {displayDate && (
-                      <span className="card-date-badge">• {displayDate}</span>
-                    )}
-                  </div>
+                <div>
+                  <h3 className="card-title">{item.name}</h3>
+                  <span className="card-location">{item.location}</span>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ textAlign: 'right' }}>
                   <span className={`status-badge ${badgeClass}`}>
                     {showLiveDot && <span className="status-indicator-dot" aria-hidden="true" />}
                     {statusText}
@@ -189,56 +133,32 @@ export default function LiveResults({ initialData = [], currentDateStr = '' }) {
                 <div className="round-box">
                   <div className="round-header">1st Round (FR)</div>
                   <div className="round-time">{item.round1Time}</div>
-                  <div
-                    className={`round-score ${item.round1 ? 'score-green' : 'score-waiting'}`}
-                    aria-label={`First Round Score: ${item.round1 || 'Not declared'}`}
-                  >
+                  <div className={`round-score ${item.round1 ? 'score-green' : 'score-waiting'}`}>
                     {item.round1 ? item.round1 : '--'}
                   </div>
-                  <div className="round-schedule-tag">Schedule: {item.round1Time} IST</div>
                 </div>
 
                 {/* 2nd Round */}
                 <div className="round-box">
                   <div className="round-header">2nd Round (SR)</div>
                   <div className="round-time">{item.round2Time}</div>
-                  <div
-                    className={`round-score ${item.round2 ? 'score-gold' : 'score-waiting'}`}
-                    aria-label={`Second Round Score: ${item.round2 || 'Not declared'}`}
-                  >
+                  <div className={`round-score ${item.round2 ? 'score-gold' : 'score-waiting'}`}>
                     {item.round2 ? item.round2 : '--'}
                   </div>
-                  <div className="round-schedule-tag">Schedule: {item.round2Time} IST</div>
                 </div>
               </div>
 
-              {/* Timestamp & Verification Provenance */}
-              <div className="card-timestamp-bar">
-                <span className="card-provenance" title={`Source: ${item.sourceInfo || 'Official Field Record'}`}>
-                  {item.round1 || item.round2
-                    ? item.isVerified
-                      ? '✓ Verified Official Record'
-                      : 'Field Declaration (Pending Review)'
-                    : 'Awaiting Match Declaration'}
-                </span>
-                {updatedTimeStr && (
-                  <span className="card-updated-time">Updated: {updatedTimeStr} IST</span>
-                )}
-              </div>
-
-              {/* Action Links */}
               <div className="card-footer">
-                <Link
-                  href={pastHref}
-                  className="card-archive-link"
-                  title={`View historical archive for ${item.name}`}
-                >
-                  Previous Results
-                </Link>
+                <span title={`Source: ${item.sourceInfo || 'Official Field Record'}`}>
+                  {item.round1 || item.round2 ? (item.isVerified ? 'Verified Bulletin' : 'Field Declaration') : 'Awaiting Result'}
+                </span>
                 <Link
                   href={gameHref}
-                  className="card-details-link"
-                  title={`View complete details and rules for ${item.name}`}
+                  style={{
+                    color: 'var(--primary-color)',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
                 >
                   Game Details &rarr;
                 </Link>
