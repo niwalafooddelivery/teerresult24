@@ -32,13 +32,11 @@ export const metadata = {
     title: 'Teer Result Today - Live Updates | TeerResult',
     description: 'Fastest verified Teer Result, Shillong Teer and Khanapara Teer outcomes.',
   },
-  
   verification: {
-    other: {
-      "msvalidate.01": "736F0433B47562A1EFBB566763DF23CF",
-    },
+  other: {
+    "msvalidate.01": "736E0433B47562A1EEBB566763DF23CF",
   },
-
+},
   robots: {
     index: true,
     follow: true,
